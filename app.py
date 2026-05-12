@@ -1,3 +1,5 @@
+from pdb import main
+
 import streamlit as st
 import tempfile
 
@@ -5,9 +7,14 @@ from src.cv_parser import extract_text_from_pdf
 
 from src.skill_extractor import extract_skills
 
-from src.job_matcher import calculate_match, suggest_alternative_roles, ROLE_REQUIREMENTS
 from src.rag_pipeline import load_job_role_documents, retrieve_role_context
 from src.llm_service import generate_explanation
+from src.job_description_cleaner import job_description_cleaner_main
+from src.job_matcher import load_job_profiles, calculate_match, suggest_alternative_roles
+
+
+#job_description_cleaner_main()  # Process job descriptions at startup to ensure documents are ready for RAG retrieval
+
 
 print("Starting the frontend application...")
 
@@ -27,9 +34,12 @@ st.info(
 
 st.sidebar.header("Configuration")
 
+load_job_profiles = load_job_profiles()  # Load job profiles at startup to ensure data is ready for matching
+print(f"Loaded job profiles: {list(load_job_profiles.keys())}")
+
 target_role = st.sidebar.selectbox(
     "Select target job field",
-    list(ROLE_REQUIREMENTS.keys())
+    list(load_job_profiles.keys())
 )
 
 uploaded_cv = st.file_uploader(
@@ -45,8 +55,18 @@ if uploaded_cv:
     cv_text = extract_text_from_pdf(cv_path)
     user_skills = extract_skills(cv_text)
 
-    match_result = calculate_match(user_skills, target_role)
-    alternative_roles = suggest_alternative_roles(user_skills)
+    ########################
+    selected_job_profile = job_profiles[target_role]
+
+    match_result = calculate_match(user_skills, selected_job_profile)
+
+    alternative_roles = suggest_alternative_roles(user_skills, job_profiles)
+    
+    ###########################
+    selected_job_profile = job_profiles[target_role]
+
+    match_result = calculate_match(user_skills, selected_job_profile)
+    alternative_roles = suggest_alternative_roles(user_skills, selected_job_profile)
 
     role_docs = load_job_role_documents()
     role_context = retrieve_role_context(target_role, role_docs)

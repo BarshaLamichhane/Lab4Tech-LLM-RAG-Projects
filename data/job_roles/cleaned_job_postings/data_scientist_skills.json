@@ -1,0 +1,57 @@
+{
+    "role": "Machine Learning Engineer",
+    "required_skills": [
+        "Python",
+        "Machine Learning",
+        "Deep Learning",
+        "Large Language Models",
+        "Cloud Platforms",
+        "AWS",
+        "Data Workflows",
+        "ML Model Deployment",
+        "Computer Vision",
+        "Object Detection",
+        "Image Segmentation",
+        "Image Classification"
+    ],
+    "preferred_skills": [
+        "AWS SageMaker",
+        "AWS Bedrock",
+        "NVIDIA AI Platforms",
+        "Media Processing",
+        "Audio Processing",
+        "Video Processing",
+        "Image Processing"
+    ],
+    "soft_skills": [
+        "Problem Solving",
+        "Collaboration",
+        "Independent Work",
+        "Communication",
+        "Ownership"
+    ],
+    "tools_and_platforms": [
+        "AWS",
+        "AWS SageMaker",
+        "AWS Bedrock",
+        "NVIDIA AI Platforms"
+    ],
+    "experience": [
+        "3+ years Python development",
+        "4+ years Machine Learning, Deep Learning, or Large Language Model-based systems",
+        "Strong experience with cloud platforms for building and deploying AI/ML pipelines",
+        "Experience designing scalable workflows for data ingestion, processing, labeling, and secure storage for model training",
+        "Proven experience in training, fine-tuning, testing, and deploying machine learning models in production environments",
+        "Experience working independently and collaboratively in distributed, remote-first teams"
+    ],
+    "responsibilities": [
+        "Design, develop, and maintain scalable AI/ML services and pipelines in cloud-based environments",
+        "Build and optimize machine learning workflows, including data preparation, curation, annotation, training, validation, and deployment",
+        "Contribute to research and development initiatives involving emerging AI frameworks, models, and technologies",
+        "Deploy and support production-grade machine learning systems with a strong focus on reliability, scalability, and performance",
+        "Troubleshoot and resolve issues in mission-critical production environments following an end-to-end ownership mindset",
+        "Develop vision-based AI solutions, including object detection, image segmentation, labeling, and classification tasks",
+        "Collaborate with cross-functional and distributed teams to deliver high-quality, production-ready AI solutions",
+        "Continuously improve system architecture, model performance, and operational efficiency through experimentation and optimization"
+    ]
+}
