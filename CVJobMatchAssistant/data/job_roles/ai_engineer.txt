@@ -1,0 +1,2 @@
+###AI Engineer requires Python, machine learning, deep learning, LLMs, RAG, LangChain, vector databases, FastAPI, Docker, cloud deployment, evaluation, and problem-solving skills.
+

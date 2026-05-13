@@ -1,0 +1,59 @@
+# Virtual environment
+venv/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Streamlit cache
+.streamlit/
+
+# macOS files
+.DS_Store
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+tmp/
+temp/
+
+# SQLite database
+*.db
+
+# Testing cache
+.pytest_cache/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Model/cache folders
+models/
+cache/
+
+# FAISS vector database (future RAG integration)
+vectorstore/
+
+# Uploaded/generated files
+uploads/
+generated_content/
