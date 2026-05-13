@@ -73,7 +73,7 @@ lab4tech-cv-rag-assistant/
 ## 1. Clone repository
 
 ```bash
-git clone https://github.com/BarshaLamichhane/Lab4Tech-cv-rag-assistant.git
+git clone https://github.com/BarshaLamichhane/Lab4Tech-llm-rag-projects.git
 cd lab4tech-cv-rag-assistant
 ```
 
@@ -98,7 +98,7 @@ source venv/bin/activate
 # 📦 Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r CV-job-matching-assistant/requirements.txt
 ```
 
 ---
@@ -106,7 +106,7 @@ pip install -r requirements.txt
 # Run Application
 
 ```bash
-streamlit run app.py
+streamlit run CV-job-matching-assistant/app.py
 ```
 
 ---
