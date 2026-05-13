@@ -116,6 +116,7 @@ If you encounter an error such as:
 ModuleNotFoundError: No module named 'src.content_generator'
 ```
 
+```md
 Example:
 
 project/
