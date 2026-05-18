@@ -73,6 +73,34 @@ llm-RAG-interview-assistant/
 git clone https://github.com/BarshaLamichhane/Lab4Tech-llm-rag-projects.git
 cd lab4tech-cv-rag-assistant
 ```
+# Future Improvements
+
+Planned Features
+RAG integration using FAISS
+Knowledge base retrieval
+Voice interview mode
+Conversation memory
+Skill-gap analytics
+Adaptive difficulty progression
+Learning roadmap generation
+PDF export
+User progress tracking
+
+# Example Future Enhancement
+
+User Profile
+↓
+Skill Analysis
+↓
+RAG Knowledge Retrieval
+↓
+LLM Prompt Generation
+↓
+Adaptive Content Generation
+↓
+Interview Feedback
+↓
+Learning Recommendation
 
 ## 2. Create virtual environment
 
@@ -127,6 +155,7 @@ project/
 │   └── ...
 
 create an empty __init__.py file inside the src/ directory:
+```
 
 ```bash
 touch llm-RAG-interview-assistant/src/__init__.py
