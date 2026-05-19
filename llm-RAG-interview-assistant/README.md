@@ -163,4 +163,30 @@ touch llm-RAG-interview-assistant/src/__init__.py
 
 This allows Python to recognize src as a package and fixes import-related issues.
 ---
+Before pushing to git don't forget to check with this command to know whether commting account is same as your github account or not.
 
+```bash
+git log --format="%an <%ae>"
+```
+if found different do this:
+
+```bash
+git filter-branch -f --env-filter '
+
+OLD_EMAIL="barshalamichhane@Barshas-MacBook-Air.local"
+CORRECT_NAME="BarshaLamichhane"
+CORRECT_EMAIL="barshalamichhane.bl@gmail.com"
+
+if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
+then
+    export GIT_COMMITTER_NAME="$CORRECT_NAME"
+    export GIT_COMMITTER_EMAIL="$CORRECT_EMAIL"
+fi
+
+if [ "$GIT_AUTHOR_EMAIL" = "$OLD_EMAIL" ]
+then
+    export GIT_AUTHOR_NAME="$CORRECT_NAME"
+    export GIT_AUTHOR_EMAIL="$CORRECT_EMAIL"
+fi
+' --tag-name-filter cat -- --branches --tags
+```
