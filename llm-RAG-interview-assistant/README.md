@@ -190,3 +190,8 @@ then
 fi
 ' --tag-name-filter cat -- --branches --tags
 ```
+Note: 
+LD_EMAIL="barshalamichhane@Barshas-MacBook-Air.local"
+CORRECT_NAME="BarshaLamichhane"
+CORRECT_EMAIL="barshalamichhane.bl@gmail.com"
+It needs to be replaced by your own
