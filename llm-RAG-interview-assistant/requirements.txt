@@ -9,3 +9,5 @@ faiss-cpu
 langchain
 langchain-community
 google-generativeai
+llama-cpp-python 
+pydantic
