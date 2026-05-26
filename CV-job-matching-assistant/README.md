@@ -102,11 +102,18 @@ pip install -r CV-job-matching-assistant/requirements.txt
 ```
 
 ---
+# Download model
+Here we will download mistral manually
 
+```bash
+python CV-job-matching-assistant/src/download_model.py
+```
+---
 # Run Application
 
 ```bash
 streamlit run CV-job-matching-assistant/app.py
+streamlit run CV-job-matching-assistant/app-job-description-extractor.py
 ```
 
 ---

@@ -127,6 +127,13 @@ pip install -r llm-RAG-interview-assistant/requirements.txt
 ```
 
 ---
+# Download model
+Here we will download mistral manually
+
+```bash
+python CV-job-matching-assistant/src/download_model.py
+```
+---
 
 # Run Application
 
