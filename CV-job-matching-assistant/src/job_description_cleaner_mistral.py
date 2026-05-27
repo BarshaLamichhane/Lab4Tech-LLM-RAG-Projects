@@ -65,6 +65,7 @@ def extract_job_skills(job_description: str) -> dict:
     You are an expert job description parser with a precision focus on extracting structured skills information.
     
 
+    
 
     Return ONLY valid JSON in this format:
 
@@ -77,13 +78,19 @@ def extract_job_skills(job_description: str) -> dict:
     "experience": [],
     "responsibilities": []
     }}
+    
 
     Rules:
+    
     - Extract only information explicitly written in the job description.
     - Do not invent skills.
     - Keep skill names concise and standardized.
     - Ignore salary, location, benefits, and company marketing text.
     - Return JSON only.
+    
+    For every extracted skill:
+    - include the exact verbatim sentence or phrase from the job description
+    - do not paraphrase
 
     Job description:
     \"\"\"
