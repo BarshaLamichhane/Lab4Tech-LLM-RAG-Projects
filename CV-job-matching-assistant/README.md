@@ -92,17 +92,37 @@ venv\Scripts\activate
 python -m venv venv
 source venv/bin/activate
 ```
+then do 
+
+```bash 
+which python
+```
+It should show python inside your venv for example '/Users/barshalamichhane/Documents/python-project/LLM-Projects/Lab4Tech-LLM-RAG-Projects/venv/bin/python' of your working directory not inside your global machine
 
 ---
 
 # 📦 Install Dependencies
 
 ```bash
-pip install -r CV-job-matching-assistant/requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r CV-job-matching-assistant/requirements.txt
 ```
+then do 
+```bash 
+which pip
+```
+It should show inside venv of your working directory something like this for example
+'/Users/barshalamichhane/Documents/python-project/LLM-Projects/Lab4Tech-LLM-RAG-Projects/venv/bin/pip'
+
+if you do only 
+```bash
+pip install --upgrade pip
+```
+without python -m then your library is not inside venv of your current working directory. it will be somewhere else, globally.
+
 
 ---
-# Download model
+# Download model if want to use offline mistral model
 Here we will download mistral manually
 
 ```bash
@@ -113,7 +133,8 @@ python CV-job-matching-assistant/src/download_model.py
 
 ```bash
 streamlit run CV-job-matching-assistant/app.py
-streamlit run CV-job-matching-assistant/app-job-description-extractor.py
+streamlit run CV-job-matching-assistant/app-job-skill-extractor-offline-mistral.py
+streamlit run CV-job-matching-assistant/app-job-skill-extractor-mistral-api.py
 ```
 
 ---

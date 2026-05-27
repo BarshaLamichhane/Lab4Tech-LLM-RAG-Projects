@@ -26,7 +26,7 @@ models/
 
 # Uploaded CVs / PDFs
 data/sample_cvs/
-data/job_roles/raw_job_postings/
+#data/job_roles/raw_job_postings/
 uploads/
 *.pdf
 

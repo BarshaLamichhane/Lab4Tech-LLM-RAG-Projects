@@ -1,0 +1,44 @@
+{
+    "role": "AI Engineer",
+    "required_skills": [
+        "Python",
+        "asynchronous programming",
+        "LLM-based agents",
+        "reasoning workflows",
+        "tool use",
+        "workflow orchestration",
+        "agent frameworks (LangChain, LangGraph, CrewAI)",
+        "RAG architectures",
+        "embeddings",
+        "vector databases",
+        "chunking",
+        "retrieval strategies",
+        "managed AI platforms (AWS Bedrock, Microsoft Foundry)",
+        "API integration (REST, GraphQL)",
+        "containerization (Docker, Kubernetes)",
+        "Infrastructure as Code",
+        "observability (logging, tracing, monitoring)"
+    ],
+    "preferred_skills": [],
+    "soft_skills": [],
+    "tools_and_platforms": [
+        "LangChain",
+        "LangGraph",
+        "CrewAI",
+        "AWS Bedrock",
+        "Microsoft Foundry",
+        "Docker",
+        "Kubernetes"
+    ],
+    "experience": [
+        "5+ years of work experience with Python"
+    ],
+    "responsibilities": [
+        "Design, develop, and deploy autonomous AI agents leveraging large language models (LLMs), including reasoning workflows, planning logic, prompt engineering strategies, and memory architectures (short-term and long-term)",
+        "Build and maintain retrieval-augmented generation (RAG) pipelines, connecting agents to internal knowledge bases, document repositories, APIs, and enterprise data sources",
+        "Design and orchestrate multi-agent systems, implementing coordination patterns (sequential, parallel, hierarchical) and optimizing workflows for performance, cost, and reliability",
+        "Integrate AI agents into enterprise platforms and managed services (e.g., AWS Bedrock, Microsoft Foundry), designing scalable and hybrid architectures",
+        "Ensure AI safety, governance, and compliance, including guardrails, monitoring, observability pipelines, and alignment with GDPR and data protection requirements",
+        "Collaborate with business and research teams to identify use cases, translate requirements into technical solutions, and deliver production-ready AI applications"
+    ]
+}

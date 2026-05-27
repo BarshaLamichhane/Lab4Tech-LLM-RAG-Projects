@@ -117,14 +117,37 @@ venv\Scripts\activate
 python -m venv venv
 source venv/bin/activate
 ```
+then do 
+
+```bash 
+which python
+```
+It should show python inside your venv for example in my case '/Users/barshalamichhane/Documents/python-project/LLM-Projects/Lab4Tech-LLM-RAG-Projects/venv/bin/python' of your working directory not inside your global machine
 
 ---
 
 # 📦 Install Dependencies
 
 ```bash
-pip install -r llm-RAG-interview-assistant/requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r llm-RAG-interview-assistant/requirements.txt
 ```
+then do 
+```bash 
+which pip
+```
+It should show inside venv of your working directory something like this for example in my case
+'/Users/barshalamichhane/Documents/python-project/LLM-Projects/Lab4Tech-LLM-RAG-Projects/venv/bin/pip'
+
+if you do only 
+```bash
+pip install --upgrade pip
+```
+without python -m then your library is not inside venv of your current working directory. it will be somewhere else, globally.
+
+
+
+
 
 ---
 # Download model
