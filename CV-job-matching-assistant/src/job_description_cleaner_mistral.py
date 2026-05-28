@@ -41,22 +41,46 @@ def load_llm():
 # =========================
 # PYDANTIC SCHEMA
 # =========================
+class SkillEvidence(BaseModel):
+    skill: str
+    evidence: str
+
+class ResponsibilityEvidence(BaseModel):
+    responsibility: str
+    evidence: str
+
+
+class ExperienceEvidence(BaseModel):
+    experience: str
+    evidence: str
 
 class JobSkills(BaseModel):
 
     role: str = ""
 
-    required_skills: List[str] = Field(default_factory=list)
+    required_skills: List[SkillEvidence]
 
-    preferred_skills: List[str] = Field(default_factory=list)
+    preferred_skills: List[SkillEvidence]
 
-    soft_skills: List[str] = Field(default_factory=list)
+    soft_skills: List[SkillEvidence]
 
-    tools_and_platforms: List[str] = Field(default_factory=list)
+    tools_and_platforms: List[SkillEvidence]
 
-    experience: List[str] = Field(default_factory=list)
+    experience: List[ExperienceEvidence]
 
-    responsibilities: List[str] = Field(default_factory=list)
+    responsibilities: List[ResponsibilityEvidence]
+
+    #required_skills: List[str] = Field(default_factory=list)
+
+    #preferred_skills: List[str] = Field(default_factory=list)
+
+    #soft_skills: List[str] = Field(default_factory=list)
+
+    #tools_and_platforms: List[str] = Field(default_factory=list)
+
+    #experience: List[str] = Field(default_factory=list)
+
+    #responsibilities: List[str] = Field(default_factory=list)
 
 def extract_job_skills(job_description: str) -> dict:
     start_time = time.time()
@@ -67,16 +91,54 @@ def extract_job_skills(job_description: str) -> dict:
 
     
 
-    Return ONLY valid JSON in this format:
+    Return ONLY valid JSON. 
+
+    STRICT JSON SCHEMA:
 
     {{
-    "role": "",
-    "required_skills": [],
-    "preferred_skills": [],
-    "soft_skills": [],
-    "tools_and_platforms": [],
-    "experience": [],
-    "responsibilities": []
+        "role": "string",
+
+        "required_skills": [
+            {{
+            "skill": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ],
+
+        "preferred_skills": [
+            {{
+            "skill": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ],
+
+        "soft_skills": [
+            {{
+            "skill": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ],
+
+        "tools_and_platforms": [
+            {{
+            "skill": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ],
+
+        "experience": [
+            {{
+            "experience": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ],
+
+        "responsibilities": [
+            {{
+            "responsibility": "string",
+            "evidence": "exact verbatim quote from job description"
+            }}
+        ]
     }}
     
 
@@ -87,10 +149,9 @@ def extract_job_skills(job_description: str) -> dict:
     - Keep skill names concise and standardized.
     - Ignore salary, location, benefits, and company marketing text.
     - Return JSON only.
-    
-    For every extracted skill:
     - include the exact verbatim sentence or phrase from the job description
-    - do not paraphrase
+    - do not paraphrase the evidence - it must be a direct quote that supports why you classified a skill as required, preferred, soft skill, tool/platform, experience, or responsibility.
+   
 
     Job description:
     \"\"\"

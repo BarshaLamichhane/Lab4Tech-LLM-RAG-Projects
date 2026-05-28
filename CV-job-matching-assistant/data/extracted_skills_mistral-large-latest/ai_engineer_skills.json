@@ -1,44 +1,105 @@
 {
     "role": "AI Engineer",
     "required_skills": [
-        "Python",
-        "asynchronous programming",
-        "LLM-based agents",
-        "reasoning workflows",
-        "tool use",
-        "workflow orchestration",
-        "agent frameworks (LangChain, LangGraph, CrewAI)",
-        "RAG architectures",
-        "embeddings",
-        "vector databases",
-        "chunking",
-        "retrieval strategies",
-        "managed AI platforms (AWS Bedrock, Microsoft Foundry)",
-        "API integration (REST, GraphQL)",
-        "containerization (Docker, Kubernetes)",
-        "Infrastructure as Code",
-        "observability (logging, tracing, monitoring)"
+        {
+            "skill": "Python",
+            "evidence": "Strong proficiency in Python, including asynchronous programming patterns for building scalable and efficient AI workflows"
+        },
+        {
+            "skill": "LLM-based agents",
+            "evidence": "Proven experience designing and deploying LLM-based agents in production environments, including reasoning, tool use, and workflow orchestration"
+        },
+        {
+            "skill": "Agent frameworks (LangChain, LangGraph, CrewAI)",
+            "evidence": "Hands-on experience with agent frameworks such as LangChain, LangGraph, CrewAI or similar"
+        },
+        {
+            "skill": "RAG architectures",
+            "evidence": "Solid understanding of RAG architectures, including embeddings, vector databases, chunking, and retrieval strategies"
+        },
+        {
+            "skill": "Managed AI platforms (AWS Bedrock, Microsoft Foundry)",
+            "evidence": "Experience with managed AI platforms (AWS Bedrock, Microsoft Foundry) and integration with APIs (REST / GraphQL)"
+        },
+        {
+            "skill": "API integration (REST / GraphQL)",
+            "evidence": "Experience with managed AI platforms (AWS Bedrock, Microsoft Foundry) and integration with APIs (REST / GraphQL)"
+        },
+        {
+            "skill": "Containerization (Docker/Kubernetes)",
+            "evidence": "Familiarity with containerized environments (Docker/Kubernetes)"
+        },
+        {
+            "skill": "Infrastructure as Code",
+            "evidence": "Familiarity with containerized environments (Docker/Kubernetes), Infrastructure as Code, and observability practices (logging, tracing, monitoring)"
+        },
+        {
+            "skill": "Observability practices (logging, tracing, monitoring)",
+            "evidence": "Familiarity with containerized environments (Docker/Kubernetes), Infrastructure as Code, and observability practices (logging, tracing, monitoring)"
+        }
     ],
     "preferred_skills": [],
     "soft_skills": [],
     "tools_and_platforms": [
-        "LangChain",
-        "LangGraph",
-        "CrewAI",
-        "AWS Bedrock",
-        "Microsoft Foundry",
-        "Docker",
-        "Kubernetes"
+        {
+            "skill": "LangChain",
+            "evidence": "Hands-on experience with agent frameworks such as LangChain, LangGraph, CrewAI or similar"
+        },
+        {
+            "skill": "LangGraph",
+            "evidence": "Hands-on experience with agent frameworks such as LangChain, LangGraph, CrewAI or similar"
+        },
+        {
+            "skill": "CrewAI",
+            "evidence": "Hands-on experience with agent frameworks such as LangChain, LangGraph, CrewAI or similar"
+        },
+        {
+            "skill": "AWS Bedrock",
+            "evidence": "Experience with managed AI platforms (AWS Bedrock, Microsoft Foundry) and integration with APIs (REST / GraphQL)"
+        },
+        {
+            "skill": "Microsoft Foundry",
+            "evidence": "Experience with managed AI platforms (AWS Bedrock, Microsoft Foundry) and integration with APIs (REST / GraphQL)"
+        },
+        {
+            "skill": "Docker",
+            "evidence": "Familiarity with containerized environments (Docker/Kubernetes)"
+        },
+        {
+            "skill": "Kubernetes",
+            "evidence": "Familiarity with containerized environments (Docker/Kubernetes)"
+        }
     ],
     "experience": [
-        "5+ years of work experience with Python"
+        {
+            "experience": "5+ years of work experience with Python",
+            "evidence": "\u2022 5+ years of work experience with Python (Programming Language)"
+        }
     ],
     "responsibilities": [
-        "Design, develop, and deploy autonomous AI agents leveraging large language models (LLMs), including reasoning workflows, planning logic, prompt engineering strategies, and memory architectures (short-term and long-term)",
-        "Build and maintain retrieval-augmented generation (RAG) pipelines, connecting agents to internal knowledge bases, document repositories, APIs, and enterprise data sources",
-        "Design and orchestrate multi-agent systems, implementing coordination patterns (sequential, parallel, hierarchical) and optimizing workflows for performance, cost, and reliability",
-        "Integrate AI agents into enterprise platforms and managed services (e.g., AWS Bedrock, Microsoft Foundry), designing scalable and hybrid architectures",
-        "Ensure AI safety, governance, and compliance, including guardrails, monitoring, observability pipelines, and alignment with GDPR and data protection requirements",
-        "Collaborate with business and research teams to identify use cases, translate requirements into technical solutions, and deliver production-ready AI applications"
+        {
+            "responsibility": "Design, develop, and deploy autonomous AI agents leveraging large language models (LLMs), including reasoning workflows, planning logic, prompt engineering strategies, and memory architectures (short-term and long-term)",
+            "evidence": "Design, develop, and deploy autonomous AI agents leveraging large language models (LLMs), including reasoning workflows, planning logic, prompt engineering strategies, and memory architectures (short\u2011term and long\u2011term)"
+        },
+        {
+            "responsibility": "Build and maintain retrieval-augmented generation (RAG) pipelines, connecting agents to internal knowledge bases, document repositories, APIs, and enterprise data sources",
+            "evidence": "Build and maintain retrieval-augmented generation (RAG) pipelines, connecting agents to internal knowledge bases, document repositories, APIs, and enterprise data sources"
+        },
+        {
+            "responsibility": "Design and orchestrate multi-agent systems, implementing coordination patterns (sequential, parallel, hierarchical) and optimizing workflows for performance, cost, and reliability",
+            "evidence": "Design and orchestrate multi-agent systems, implementing coordination patterns (sequential, parallel, hierarchical) and optimizing workflows for performance, cost, and reliability"
+        },
+        {
+            "responsibility": "Integrate AI agents into enterprise platforms and managed services (e.g. AWS Bedrock, Microsoft Foundry), designing scalable and hybrid architectures",
+            "evidence": "Integrate AI agents into enterprise platforms and managed services (e.g. AWS Bedrock, Microsoft Foundry), designing scalable and hybrid architectures"
+        },
+        {
+            "responsibility": "Ensure AI safety, governance, and compliance, including guardrails, monitoring, observability pipelines, and alignment with GDPR and data protection requirements",
+            "evidence": "Ensure AI safety, governance, and compliance, including guardrails, monitoring, observability pipelines, and alignment with GDPR and data protection requirements"
+        },
+        {
+            "responsibility": "Collaborate with business and research teams to identify use cases, translate requirements into technical solutions, and deliver production-ready AI applications",
+            "evidence": "Collaborate with business and research teams to identify use cases, translate requirements into technical solutions, and deliver production-ready AI applications"
+        }
     ]
 }
