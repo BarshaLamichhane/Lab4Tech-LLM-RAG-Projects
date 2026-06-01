@@ -12,5 +12,128 @@
     "Scala",
     "R",
     "SQL"
-  ]
+  ],
+  "skill_aliases": {
+    "ai": "artificial intelligence",
+    "ml": "machine learning",
+    "llm": "large language models",
+    "llms": "large language models",
+    "rag": "RAG architectures",
+    "cv": "computer vision",
+    "iac": "Infrastructure as Code",
+    "rest api": "API integration",
+    "rest apis": "API integration",
+    "api integration": "API integration",
+    "workflow orchestration": "Workflow orchestration",
+    "gemini": "Gemini",
+    "fastapi": "FastAPI",
+    "ci/cd": "CI/CD",
+    "cicd": "CI/CD",
+    "data protection": "Data protection",
+    "swiss data protection": "Swiss data protection",
+    "azure ml": "Azure ML",
+    "azure openai": "Azure OpenAI",
+    "azure cognitive services": "Azure Cognitive Services"
+  },
+  "generic_skill_terms": [
+    "api",
+    "apis",
+    "ci",
+    "cd",
+    "workflows",
+    "integrations"
+  ],
+  "broad_skill_aliases": {
+    "javascript/typescript": [
+      "javascript",
+      "typescript"
+    ],
+    "low/no-code tools": [
+      "low code tools",
+      "no code tools",
+      "power platform",
+      "n8n",
+      "streamlit"
+    ],
+    "ai development tools": [
+      "chatgpt",
+      "github copilot",
+      "cursor",
+      "claude",
+      "gemini",
+      "llm apis",
+      "llm api"
+    ],
+    "apis, integrations, and workflow orchestration": [
+      "api integration",
+      "rest api",
+      "rest apis",
+      "apis",
+      "workflow orchestration",
+      "ml pipeline orchestration",
+      "data ingestion workflows"
+    ],
+    "cloud platforms": [
+      "aws",
+      "amazon web services",
+      "aws sagemaker",
+      "aws bedrock",
+      "azure",
+      "microsoft azure",
+      "gcp",
+      "google cloud",
+      "google cloud platform"
+    ],
+    "ai platforms": [
+      "aws bedrock",
+      "microsoft foundry",
+      "azure ai",
+      "nvidia ai platforms"
+    ],
+    "agent frameworks": [
+      "langchain",
+      "langgraph",
+      "crewai"
+    ],
+    "llm orchestration frameworks": [
+      "langchain",
+      "langgraph",
+      "crewai",
+      "llm orchestration"
+    ],
+    "containerization": [
+      "docker",
+      "kubernetes"
+    ],
+    "responsible ai, governance, and data protection principles": [
+      "responsible ai",
+      "governance",
+      "data protection",
+      "swiss data protection",
+      "lpd",
+      "hallucination mitigation"
+    ],
+    "building digital, automation, or ai-enabled solutions": [
+      "ai solutions",
+      "production-ready ai solutions",
+      "automation",
+      "automation system",
+      "ai applications",
+      "end-to-end ai applications"
+    ],
+    "developing lightweight applications, workflows, or automation tools": [
+      "streamlit",
+      "fastapi",
+      "workflow automation",
+      "automation workflows",
+      "interactive user interfaces",
+      "interactive tools"
+    ],
+    "building reusable solutions adopted across teams or regions": [
+      "reusable",
+      "production-ready ai solutions",
+      "cloud-hosted architecture",
+      "enterprise use cases"
+    ]
+  }
 }

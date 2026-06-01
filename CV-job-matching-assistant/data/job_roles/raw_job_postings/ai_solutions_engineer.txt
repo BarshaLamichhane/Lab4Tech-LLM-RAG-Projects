@@ -1,0 +1,63 @@
+
+Full job description
+What if your ability to build with AI could directly transform how global sustainability challenges are solved?
+
+At ERM, this isn’t experimental work on the sidelines — this is embedding AI into the core of consulting delivery, at scale, across industries and geographies.
+
+We’re hiring AI Solutions Engineers to join our global AI Accelerator team — a small, high‑impact group building practical, deployable solutions that consulting teams actually use. If you are someone who moves quickly from idea to working solution, and care about real‑world impact over proof‑of‑concepts, this role is built for you.
+
+Why This Role Matters
+Sustainability consulting is evolving rapidly — but delivery models are still catching up.
+
+This role exists to close that gap.
+
+You will help redefine how work gets done by embedding AI into real workflows — turning manual, fragmented processes into scalable, intelligent delivery systems. Your work won’t sit in a lab — it will be adopted across global projects, teams, and clients.
+
+What Your Impact Is
+Turn real consulting challenges into working AI solutions used in live delivery
+Build repeatable accelerators that scale impact across regions and sectors
+Reduce manual effort and unlock higher‑value consulting time
+Enable teams to adopt AI with confidence through hands‑on solutions, not theory
+Influence how ERM operationalises responsible, enterprise‑ready AI at scale
+What You'll Bring
+Required
+2–5 years building digital, automation, or AI‑enabled solutions in a practical environment
+Proven experience developing lightweight applications, workflows, or automation tools
+Strong working knowledge of:
+Python, SQL, or JavaScript/TypeScript
+Low/no‑code tools (e.g. Power Platform, n8n, Streamlit)
+Hands‑on use of AI development tools (e.g. ChatGPT, GitHub Copilot, Cursor, Claude)
+Experience working with APIs, integrations, and workflow orchestration
+Ability to translate ambiguous business problems into working technical solutions
+Strong communication skills with the ability to work directly with non‑technical stakeholders
+Comfortable operating in fast‑moving, loosely defined environments
+Degree in Computer Science, Engineering, Data Science, or related field
+Preferred
+Experience in consulting or client‑facing delivery environments
+Exposure to sustainability, ESG, EHS, or operational reporting workflows
+Familiarity with:
+LangChain / LangGraph / LLM orchestration frameworks
+Cloud platforms (Azure, AWS, GCP, Azure OpenAI)
+Power BI, Tableau, or similar tools
+Understanding of responsible AI, governance, and data protection principles
+Experience building reusable solutions adopted across teams or regions
+Key Responsibilities
+Work directly with consulting teams to identify repeatable challenges and inefficiencies
+Design and build AI‑enabled workflows, automations, dashboards, and micro‑applications
+Develop reusable assets (prompts, templates, accelerators) for global deployment
+Leverage LLMs and AI coding tools to rapidly prototype and iterate solutions
+Translate business needs into practical, scalable technical solutions
+Support adoption through demos, coaching, and hands‑on enablement
+Evaluate when solutions should be scaled, standardised, or integrated into enterprise platforms
+Ensure all solutions align with data governance and responsible AI principles
+Contribute to AI Accelerator best practices and innovation pipelines
+Where You’ll Work
+Global opportunities across:
+North America | Continental Europe | India | LATAM
+
+⠀
+
+ERM is committed to creating an inclusive workplace where everyone feels valued, respected, and empowered to thrive, it’s an essential part of what makes ERM a great place to build a career and helps us create better solutions for our clients.
+
+We welcome talent from all backgrounds and provide equal opportunities for every candidate. If you have a disability, are neurodivergent, or need accommodations during the selection process, we’re here to support you. Our commitment doesn’t stop at hiring. Once you join us, we’ll ensure you have the tools, support, and adjustments needed to succeed and feel a true sense of belonging. Learn more about our Diversity, Inclusion & Belonging (DIB) efforts by visiting our website or exploring our 2025 Sustainability Report..
+

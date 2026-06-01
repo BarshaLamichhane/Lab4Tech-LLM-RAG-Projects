@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -21,7 +22,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
 
@@ -360,13 +361,58 @@ def save_extracted_skills(
     return output_path
 
 
+def extract_job_skills_from_file(
+    input_path: str | Path,
+    save_output: bool = False,
+    output_dir: Path = OUTPUT_JOB_DESCRIPTION_SKILLS_DIR,
+) -> JobSkills:
+    """Extract structured skills from a job-description text file."""
+    job_description = Path(input_path).read_text(encoding="utf-8")
+    extracted_skills = extract_job_skills(job_description)
+
+    if save_output:
+        save_extracted_skills(extracted_skills, output_dir)
+
+    return extracted_skills
+
+
+def main() -> None:
+    """Run job-description extraction as an individual command-line module."""
+    parser = argparse.ArgumentParser(description="Extract structured job skills using the Mistral API.")
+    parser.add_argument("job_description_file", help="Path to a TXT job-description file.")
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="Save the extracted job profile JSON to the output directory.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=OUTPUT_JOB_DESCRIPTION_SKILLS_DIR,
+        help="Directory where extracted job profile JSON should be saved.",
+    )
+    args = parser.parse_args()
+
+    extracted_skills = extract_job_skills_from_file(
+        input_path=args.job_description_file,
+        save_output=args.save,
+        output_dir=args.output_dir,
+    )
+    print(extracted_skills.model_dump_json(indent=4))
+
+
 __all__ = [
     "JobSkills",
     "SkillEvidence",
     "clean_job_skills",
     "extract_job_skills",
     "get_mistral_client",
+    "extract_job_skills_from_file",
     "load_job_description_prompt",
     "load_programming_languages",
     "save_extracted_skills",
 ]
+
+
+if __name__ == "__main__":
+    main()

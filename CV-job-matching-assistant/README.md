@@ -56,7 +56,6 @@ lab4tech-cv-rag-assistant/
 │   ├── config.py
 │   ├── cv_parser.py
 │   ├── skill_extractor.py
-│   ├── job_matcher.py
 │   ├── rag_pipeline.py
 │   ├── llm_service.py
 │   └── utils.py
@@ -132,9 +131,9 @@ python CV-job-matching-assistant/src/download_model.py
 # Run Application
 
 ```bash
-streamlit run CV-job-matching-assistant/app.py
-streamlit run CV-job-matching-assistant/app-job-skill-extractor-offline-mistral.py
-streamlit run CV-job-matching-assistant/app-job-skill-extractor-mistral-api.py
+streamlit run CV-job-matching-assistant/app-job-skill-extractor.py
+streamlit run CV-job-matching-assistant/app-cv-job-matching-engine.py
+streamlit run CV-job-matching-assistant/app-cv-job-matching-with-new-job.py
 ```
 
 ---

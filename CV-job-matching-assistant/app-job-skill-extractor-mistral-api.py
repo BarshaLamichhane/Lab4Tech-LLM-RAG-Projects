@@ -1,7 +1,7 @@
 import json
 import streamlit as st
 
-from src.job_description_cleaner_mistral_api import (
+from src.job_description.job_description_cleaner_mistral_api import (
     extract_job_skills,
     save_extracted_skills
 )

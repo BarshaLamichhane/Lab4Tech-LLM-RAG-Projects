@@ -1,0 +1,76 @@
+{
+    "role": "Machine Learning Engineer - MSA Team (Mail Delivery, Spam, and Anti-Abuse)",
+    "strongly_required_skills": [
+        {
+            "skill": "Production-level ML expertise",
+            "verbatim": "Production-level ML expertise: You've shipped models that handle real-world scale and complexity."
+        },
+        {
+            "skill": "Hands-on experience with LLMs in agentic environments",
+            "verbatim": "Hands-on experience with LLMs in agentic environments."
+        },
+        {
+            "skill": "Proficiency in Python",
+            "verbatim": "Proficiency in Python, with a solid understanding of backend and server fundamentals."
+        },
+        {
+            "skill": "Deep understanding of probability, hypothesis testing, and experimental design",
+            "verbatim": "Deep understanding of probability, hypothesis testing, and experimental design."
+        }
+    ],
+    "required_skills": [
+        "Machine Learning systems",
+        "MLOps practices",
+        "Real-time inference",
+        "Model monitoring",
+        "Automated retraining pipelines",
+        "Agentic AI systems",
+        "Autonomous threat detection",
+        "Adaptive policy enforcement",
+        "Self-healing security responses",
+        "Model development and debugging",
+        "Explainability in ML",
+        "Distributed environments",
+        "Data preparation and labeling",
+        "Statistical rigor",
+        "Software engineering",
+        "Backend fundamentals"
+    ],
+    "preferred_skills": [
+        "Adversarial ML",
+        "Red-teaming ML systems",
+        "Distributed systems",
+        "Federated learning",
+        "Differential privacy",
+        "On-device inference",
+        "Graph-based anomaly detection",
+        "Knowledge graphs",
+        "Technical leadership",
+        "Security mindset",
+        "Abuse patterns",
+        "Adversarial attacks",
+        "Threat intelligence"
+    ],
+    "soft_skills": [
+        "Collaborative",
+        "Impact-driven",
+        "Curious",
+        "Problem-solving",
+        "Communication"
+    ],
+    "tools_and_platforms": [
+        "Proton Sentinel",
+        "Proton CAPTCHA"
+    ],
+    "experience": [
+        "2+ years hands-on experience in building and running ML systems"
+    ],
+    "responsibilities": [
+        "Design and deploy scalable ML systems using modern MLOps practices, including real-time inference, model monitoring, and automated retraining pipelines",
+        "Architect agentic AI systems capable of autonomous threat detection, adaptive policy enforcement, and self-healing security responses",
+        "Build tools for model development, debugging, and explainability to accelerate iteration and transparency",
+        "Optimize ML workflows for distributed environments to handle large-scale data processing",
+        "Collaborate cross-functionally with security analysts, backend/frontend engineers, and customer support to align technical solutions with user needs",
+        "Advance the state of ML for anti-abuse and account security, exploring cutting-edge techniques like adversarial robustness, graph-based anomaly detection, and privacy-preserving AI"
+    ]
+}
