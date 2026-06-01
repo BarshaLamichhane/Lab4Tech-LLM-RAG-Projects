@@ -1,63 +1,58 @@
 {
     "role": "Machine Learning Engineer",
+    "strongly_required_skills": [
+        {
+            "skill": "Computer vision techniques",
+            "verbatim": "Solid understanding of computer vision techniques such as object detection, segmentation, and image classification."
+        },
+        {
+            "skill": "Cloud platforms",
+            "verbatim": "Strong experience working with cloud platforms (preferably AWS) for building and deploying AI/ML pipelines."
+        }
+    ],
     "required_skills": [
-        "Python",
-        "Machine Learning",
-        "Deep Learning",
-        "Large Language Models (LLMs)",
-        "Cloud Platforms (AWS)",
-        "AI/ML Pipeline Development",
-        "Data Ingestion",
-        "Data Processing",
-        "Data Labeling",
-        "Secure Data Storage",
-        "Model Training",
-        "Model Fine-tuning",
-        "Model Testing",
-        "Model Deployment",
-        "Computer Vision",
-        "Object Detection",
-        "Image Segmentation",
-        "Image Classification",
-        "Scalable System Design",
-        "Fault-Tolerant System Design",
-        "Distributed Team Collaboration"
+        "Machine learning workflows",
+        "Data preparation and labeling",
+        "Model training and deployment",
+        "Scalable system design",
+        "Fault-tolerant systems",
+        "Efficient system design",
+        "Production-grade machine learning systems",
+        "Python development.",
+        "machine learning"
     ],
     "preferred_skills": [
-        "AWS SageMaker",
-        "AWS Bedrock",
-        "NVIDIA AI Platforms",
-        "Media Processing",
-        "Audio Processing",
-        "Video Processing",
-        "Image Processing"
+        "Media processing workflows",
+        "Audio processing workflows",
+        "Video processing workflows",
+        "Image processing workflows"
     ],
     "soft_skills": [
-        "Problem-Solving",
+        "Problem-solving",
+        "Independent work",
+        "Collaboration",
         "Communication",
-        "Autonomy",
-        "Innovation",
         "Ownership",
-        "Collaboration"
+        "Experimentation",
+        "Continuous learning"
     ],
     "tools_and_platforms": [
-        "AWS",
         "AWS SageMaker",
         "AWS Bedrock",
-        "NVIDIA AI Platforms"
+        "NVIDIA AI platforms"
     ],
     "experience": [
         "3+ years of hands-on experience in Python development",
         "4+ years of experience in machine learning, deep learning, or large language model-based systems",
-        "Experience designing scalable workflows for data ingestion, processing, labeling, and secure storage for model training",
-        "Proven experience in training, fine-tuning, testing, and deploying machine learning models in production environments"
+        "3+ years of hands-on experience in Python development.",
+        "4+ years of experience in machine learning, deep learning, or large language model-based systems."
     ],
     "responsibilities": [
         "Design, develop, and maintain scalable AI/ML services and pipelines in cloud-based environments",
         "Build and optimize machine learning workflows, including data preparation, curation, annotation, training, validation, and deployment",
         "Contribute to research and development initiatives involving emerging AI frameworks, models, and technologies",
         "Deploy and support production-grade machine learning systems with a strong focus on reliability, scalability, and performance",
-        "Troubleshoot and resolve issues in mission-critical production environments following an end-to-end ownership mindset",
+        "Troubleshoot and resolve issues in mission-critical production environments following an end-to-end ownership mindset ('you build it, you run it')",
         "Develop vision-based AI solutions, including object detection, image segmentation, labeling, and classification tasks",
         "Collaborate with cross-functional and distributed teams to deliver high-quality, production-ready AI solutions",
         "Continuously improve system architecture, model performance, and operational efficiency through experimentation and optimization"

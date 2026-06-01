@@ -23,11 +23,17 @@ def load_job_profiles(data_dir: str = "data/extracted_job_skills") -> dict:
 def get_all_required_skills(job_profile: dict) -> list[str]:
     skills = []
 
+    for skill_evidence in job_profile.get("strongly_required_skills", []):
+        if isinstance(skill_evidence, dict):
+            skills.append(skill_evidence.get("skill", ""))
+        else:
+            skills.append(skill_evidence)
+
     skills.extend(job_profile.get("required_skills", []))
     skills.extend(job_profile.get("preferred_skills", []))
     skills.extend(job_profile.get("tools_and_platforms", []))
 
-    return sorted(set([skill.lower() for skill in skills]))
+    return sorted(set([skill.lower() for skill in skills if skill]))
 
 
 def calculate_match(user_skills: list[str], job_profile: dict) -> dict:
