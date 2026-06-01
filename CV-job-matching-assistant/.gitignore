@@ -30,6 +30,12 @@ data/sample_cvs/
 uploads/
 *.pdf
 
+# Learning / learner-tagged local folders
+learning_app/
+learning_data/
+prompts/learning/
+src/learning_src/
+
 # OS files
 .DS_Store
 Thumbs.db
