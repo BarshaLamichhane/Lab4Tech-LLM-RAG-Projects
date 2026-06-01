@@ -1,0 +1,116 @@
+Location
+1003 Lausanne, VD•Hybrid work
+&nbsp;
+Full job description
+Giotto.ai is a Switzerland-based AI company building intelligence systems for Switzerland and Europe.
+
+
+Our mission is to enable governments and enterprises to retain full control over the AI systems they use, without compromising access to the most advanced reasoning capabilities. From this control comes what matters most: protected data, preserved autonomy, and lasting strategic independence.
+
+
+Giotto is a portable, configurable model and AI operating system with advanced reasoning capabilities, combining open and proprietary weights, datasets, and tools to deliver high performance, adaptability, robustness, and multi-agency support.
+
+
+About the role
+
+We are looking for an AI Research Scientist to help design, train, evaluate, and improve advanced AI systems. This role sits at the intersection of deep learning research, applied machine learning, and scalable engineering.
+
+You will work on research problems involving large language models, multimodal reasoning, synthetic data generation, model evaluation, representation learning, and task-specific adaptation. You will be expected to move from ambiguous research questions to concrete hypotheses, experiments, prototypes, and eventually production-ready methods in collaboration with engineering and product teams.
+
+This is a hands-on research role: you will read papers, design experiments, train and fine-tune models, build evaluation pipelines, analyze failures, and help translate research insights into reliable AI capabilities.
+
+
+Responsibilities
+
+As an AI Research Scientist, you will:
+
+Define and execute research projects around LLMs, reasoning, multimodal models, synthetic data, and model adaptation.
+Design experiments to test hypotheses, compare architectures, evaluate training strategies, and measure model behavior.
+Train, fine-tune, and evaluate Transformer-based models using modern deep learning frameworks.
+Work on supervised fine-tuning, preference optimization, LoRA/PEFT methods, distillation, data augmentation, and evaluation-driven model improvement.
+Build robust benchmarks and diagnostic evaluations for reasoning, generalization, reliability, and task-specific performance.
+Analyze model failures and propose improvements at the level of data, architecture, training objective, prompting, or inference strategy.
+Collaborate with ML engineers to scale experiments across GPUs and distributed infrastructure.
+Contribute clean, reproducible research code, experiment configs, documentation, and internal reports.
+Stay up to date with relevant AI research and translate promising ideas into practical experiments.
+Help shape the company’s research roadmap and identify high-impact technical directions.
+
+Required experience
+
+We are looking for someone with strong experience in several of the following areas:
+
+Deep learning, especially Transformer architectures and modern sequence models.
+LLM training, fine-tuning, evaluation, or inference.
+Strong practical experience with Python and PyTorch.
+Experience with the Hugging Face ecosystem: transformers, datasets, tokenizers, model checkpoints, and generation APIs.
+Understanding of training dynamics, optimization, loss functions, overfitting, regularization, and evaluation methodology.
+Ability to design rigorous experiments and interpret results beyond headline metrics.
+Experience working with large datasets, preprocessing pipelines, and reproducible ML workflows.
+Strong mathematical foundations in linear algebra, probability, statistics, and optimization.
+Ability to read research papers and turn them into working prototypes.
+Clear communication skills and the ability to explain research tradeoffs to technical and non-technical stakeholders.
+
+Relevant tooling and stack
+
+The role should stay close to the current ML engineering stack while adding research-oriented tools.
+
+Expected core stack:
+
+Python
+PyTorch
+Hugging Face Transformers / Datasets
+CUDA-aware GPU training
+MLflow or Weights & Biases for experiment tracking
+Docker
+GitLab CI
+GCP / cloud GPU infrastructure
+Ray or similar tools for distributed workloads and experiment orchestration
+PyTorch Distributed, FSDP, DeepSpeed, or Accelerate
+PEFT / LoRA / QLoRA
+vLLM
+pytest and reproducibility tooling for research code quality
+Nice-to-have tooling:
+
+Triton or custom CUDA kernels
+GCS
+RAG pipelines, vector databases, and embedding evaluation
+Data annotation, synthetic data generation, and human-evaluation pipelines
+
+Nice-to-have research areas
+
+Experience in one or more of the following would be especially valuable:
+
+LLM reasoning and planning
+Multimodal learning
+Program synthesis or structured prediction
+Synthetic data generation
+Model merging, distillation, and compression
+Reinforcement learning or preference optimization
+Evaluation of reasoning and generalization
+Mechanistic interpretability or model analysis
+Retrieval-augmented generation
+Agentic systems and tool-using models
+Distributed training at scale
+Low-level inference optimization
+
+Profile we are looking for
+
+You may be a good fit if you:
+
+Enjoy turning unclear research questions into measurable experiments.
+Are comfortable with both theory and implementation.
+Care about reproducibility, clean experiment tracking, and honest evaluation.
+Can move quickly from paper to prototype.
+Are pragmatic: you know when to pursue a research idea deeply and when to stop.
+Like working closely with engineers to make research usable in real systems.
+Are excited by frontier AI problems but grounded in measurable progress.
+
+Location & Work Style
+
+We offer a full-time employment in Switzerland.
+
+Hybrid model:
+
+Remote work fully supported
+Team gathers one week per month in the Swiss office
+Exceptional candidates residing elsewhere in Europe may be considered.
