@@ -1,0 +1,95 @@
+<section class="result-grid">
+  <div class="metric-panel">
+    <span>Match</span>
+    <strong>{{ result.target_job_match.score }}%</strong>
+    <div class="meter">
+      <div [style.width.%]="result.target_job_match.score"></div>
+    </div>
+  </div>
+  <div class="metric-panel">
+    <span>Matched weight</span>
+    <strong>{{ result.target_job_match.matched_weight }}</strong>
+  </div>
+  <div class="metric-panel">
+    <span>Possible weight</span>
+    <strong>{{ result.target_job_match.total_possible_weight }}</strong>
+  </div>
+</section>
+
+<section class="detail-grid">
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Candidate profile</h2>
+      <button class="ghost-button" type="button" (click)="download()">Download JSON</button>
+    </div>
+    <div class="profile-line">
+      <span>Email</span>
+      <strong>{{ result.candidate_profile.email || 'Not found' }}</strong>
+    </div>
+    <div class="profile-line">
+      <span>Estimated experience</span>
+      <strong>{{ result.candidate_profile.estimated_experience_years }} years</strong>
+    </div>
+    <div class="chips">
+      <span *ngFor="let skill of result.candidate_profile.skills">{{ skill }}</span>
+    </div>
+  </div>
+
+  <div class="panel lists">
+    <h2>Target match details</h2>
+    <div>
+      <h3>Matched strongly required</h3>
+      <p *ngIf="!result.target_job_match.matched_strongly_required_skills.length">None</p>
+      <ul>
+        <li *ngFor="let skill of result.target_job_match.matched_strongly_required_skills">{{ skill }}</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Missing strongly required</h3>
+      <p *ngIf="!result.target_job_match.missing_strongly_required_skills.length">None</p>
+      <ul>
+        <li *ngFor="let skill of result.target_job_match.missing_strongly_required_skills">{{ skill }}</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Matched skills</h3>
+      <p *ngIf="!result.target_job_match.matched_skills.length">None</p>
+      <ul>
+        <li *ngFor="let skill of result.target_job_match.matched_skills">{{ skill }}</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Missing skills</h3>
+      <p *ngIf="!result.target_job_match.missing_skills.length">None</p>
+      <ul>
+        <li *ngFor="let skill of result.target_job_match.missing_skills">{{ skill }}</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="panel table-panel" *ngIf="result.all_saved_job_matches.length">
+  <h2>Match against all saved jobs</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Match</th>
+        <th>Matched strong</th>
+        <th>Missing strong</th>
+        <th>Matched skills</th>
+        <th>Missing skills</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of result.all_saved_job_matches">
+        <td>{{ row.target_role }}</td>
+        <td>{{ row.score }}%</td>
+        <td>{{ row.matched_strongly_required_skills.length }}</td>
+        <td>{{ row.missing_strongly_required_skills.length }}</td>
+        <td>{{ row.matched_skills.length }}</td>
+        <td>{{ row.missing_skills.length }}</td>
+      </tr>
+    </tbody>
+  </table>
+</section>

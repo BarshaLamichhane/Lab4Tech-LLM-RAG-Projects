@@ -7,9 +7,41 @@ env/
 __pycache__/
 *.py[cod]
 *$py.class
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# FastAPI / local backend runtime
+backend/*.log
+backend/*.pid
+backend/.env
+
+# Frontend builds and caches
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/.angular/
+frontend/**/.vite/
+frontend/**/.cache/
+frontend/**/.env
+frontend/**/*.log
+     
+# npm/yarn/pnpm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Environment variables
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
 
 # Streamlit
 .streamlit/
@@ -29,6 +61,18 @@ data/sample_cvs/
 #data/job_roles/raw_job_postings/
 uploads/
 *.pdf
+*.doc
+*.docx
+*.xlsx
+*.xls
+*.csv
+
+# Generated local data / exports
+data/extracted_skills_mistral-large-latest/
+cv-match-result.json
+*-match-result.json
+job-profile.json
+*.download.json
 
 # Learning / learner-tagged local folders
 learning_app/
@@ -46,6 +90,13 @@ Thumbs.db
 
 # Logs
 *.log
+*.pid
+
+# Frontend dependencies
+node_modules/
+.npm/
+.yarn/
+.pnpm-store/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -54,6 +105,9 @@ Thumbs.db
 temp/
 tmp/
 *.tmp
+*.bak
+*.swp
+*.swo
 
 # Build / distribution
 build/
@@ -68,6 +122,8 @@ dist/
 .coverage
 htmlcov/
 .pytest_cache/
+coverage/
+coverage.xml
 
 # Mac hidden files
 .AppleDouble

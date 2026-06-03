@@ -2,30 +2,20 @@
     "role": "Machine Learning Engineer",
     "strongly_required_skills": [
         {
-            "skill": "Computer vision techniques",
-            "verbatim": "Solid understanding of computer vision techniques such as object detection, segmentation, and image classification."
-        },
-        {
-            "skill": "Cloud platforms",
-            "verbatim": "Strong experience working with cloud platforms (preferably AWS) for building and deploying AI/ML pipelines."
+            "skill": "Computer vision techniques (object detection, segmentation, image classification)",
+            "verbatim": "Solid understanding of computer vision techniques such as object detection, segmentation, and image classification"
         }
     ],
     "required_skills": [
-        "Machine learning workflows",
+        "Cloud platforms",
         "Data preparation and labeling",
         "Model training and deployment",
-        "Scalable system design",
-        "Fault-tolerant systems",
-        "Efficient system design",
-        "Production-grade machine learning systems",
-        "Python development.",
+        "Designing scalable, fault-tolerant, and efficient systems",
+        "Python",
         "machine learning"
     ],
     "preferred_skills": [
-        "Media processing workflows",
-        "Audio processing workflows",
-        "Video processing workflows",
-        "Image processing workflows"
+        "Media, audio, video, or image processing workflows"
     ],
     "soft_skills": [
         "Problem-solving",
@@ -43,9 +33,7 @@
     ],
     "experience": [
         "3+ years of hands-on experience in Python development",
-        "4+ years of experience in machine learning, deep learning, or large language model-based systems",
-        "3+ years of hands-on experience in Python development.",
-        "4+ years of experience in machine learning, deep learning, or large language model-based systems."
+        "4+ years of experience in machine learning, deep learning, or large language model-based systems"
     ],
     "responsibilities": [
         "Design, develop, and maintain scalable AI/ML services and pipelines in cloud-based environments",

@@ -40,29 +40,43 @@ AI Explanation + Suggestions
 # 📂 Project Structure
 
 ```text
-lab4tech-cv-rag-assistant/
+CV-job-matching-assistant/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI routes
+│   │   ├── schemas.py           # API request/response models
+│   │   └── services.py          # Backend service orchestration
+│   ├── cv/                      # Backend-local CV parsing and skill extraction
+│   ├── job_description/         # Backend-local job skill extraction
+│   ├── matching/                # Backend-local matching engine
+│   └── requirements.txt
 │
-├── app.py
+├── frontend/
+│   ├── angular-frontend/        # Angular UI
+│   │   ├── angular.json
+│   │   ├── package.json
+│   │   └── src/
+│   ├── react-frontend/          # React UI
+│   │   ├── index.html
+│   │   ├── package.json
+│   │   └── src/
+│   └── streamlit-ui/            # Existing Streamlit UIs kept for now
+│       ├── app-cv-job-matching-engine.py
+│       ├── app-cv-job-matching-with-new-job.py
+│       ├── app-job-skill-extractor-mistral-api.py
+│       └── path_setup.py
+│
+├── data/
+│   ├── extracted_skills_mistral-large-latest/
+│   ├── job_roles/
+│   └── taxonomies/
+│
+├── prompts/
+├── vectorstore/
 ├── requirements.txt
 ├── README.md
 ├── .env
-├── .gitignore
-│
-├── data/
-│   ├── job_roles/
-│   └── sample_cvs/
-│
-├── src/
-│   ├── config.py
-│   ├── cv_parser.py
-│   ├── skill_extractor.py
-│   ├── rag_pipeline.py
-│   ├── llm_service.py
-│   └── utils.py
-│
-├── vectorstore/
-│
-└── prompts/
+└── .gitignore
 ```
 
 ---
@@ -119,21 +133,68 @@ pip install --upgrade pip
 ```
 without python -m then your library is not inside venv of your current working directory. it will be somewhere else, globally.
 
-
----
-# Download model if want to use offline mistral model
-Here we will download mistral manually
-
-```bash
-python CV-job-matching-assistant/src/download_model.py
-```
 ---
 # Run Application
 
+## FastAPI backend
+
+From the repository root:
+
 ```bash
-streamlit run CV-job-matching-assistant/app-job-skill-extractor.py
-streamlit run CV-job-matching-assistant/app-cv-job-matching-engine.py
-streamlit run CV-job-matching-assistant/app-cv-job-matching-with-new-job.py
+cd CV-job-matching-assistant
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+Backend health check:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+## Angular frontend
+
+In a second terminal:
+
+```bash
+cd CV-job-matching-assistant/frontend/angular-frontend
+npm install
+npm start
+```
+
+Open:
+
+```text
+http://localhost:4200/
+```
+
+The Angular UI calls the FastAPI backend at `http://localhost:8000`.
+
+## React frontend
+
+In a second terminal:
+
+```bash
+cd CV-job-matching-assistant/frontend/react-frontend
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5173/
+```
+
+The React UI calls the FastAPI backend at `http://localhost:8000`.
+
+## Existing Streamlit UIs
+
+The Streamlit apps are kept under `frontend/streamlit-ui/` for now:
+
+```bash
+streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-job-skill-extractor-mistral-api.py
+streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-cv-job-matching-engine.py
+streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-cv-job-matching-with-new-job.py
 ```
 
 ---
@@ -156,6 +217,9 @@ The current MVP supports:
 
 - Python
 - Streamlit
+- FastAPI
+- Angular
+- React
 - LangChain
 - FAISS
 - Sentence Transformers

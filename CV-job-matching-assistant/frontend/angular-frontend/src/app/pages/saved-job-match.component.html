@@ -1,0 +1,44 @@
+<section class="topbar">
+  <div>
+    <p class="eyebrow">Saved Job Match</p>
+    <h1>Compare a candidate CV against an existing extracted job</h1>
+  </div>
+  <button class="ghost-button" type="button" (click)="refreshRoles()">Refresh roles</button>
+</section>
+
+<section class="input-grid">
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Candidate CV</h2>
+      <label class="file-control">
+        <span>Upload</span>
+        <input type="file" accept=".txt,.pdf,application/pdf,text/plain" (change)="uploadCv($event)">
+      </label>
+    </div>
+    <textarea [value]="cvText" (change)="updateCvText($event)" spellcheck="false"></textarea>
+  </div>
+
+  <div class="panel">
+    <div class="panel-heading">
+      <h2>Target role</h2>
+      <span class="count">{{ roles.length }} saved</span>
+    </div>
+    <select [(ngModel)]="selectedRole">
+      <option value="" disabled>Select a saved role</option>
+      <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+    </select>
+    <button class="primary-button action-gap" type="button" [disabled]="loading" (click)="calculateMatch(false)">
+      Calculate match
+    </button>
+    <button class="ghost-button full-width action-gap" type="button" [disabled]="loading || !matchResult" (click)="calculateMatch(true)">
+      Show other fit
+    </button>
+  </div>
+</section>
+
+<section class="status-row" *ngIf="loading || errorMessage">
+  <div class="status loading" *ngIf="loading">{{ loadingLabel }}...</div>
+  <div class="status error" *ngIf="errorMessage">{{ errorMessage }}</div>
+</section>
+
+<app-match-result *ngIf="matchResult" [result]="matchResult" />

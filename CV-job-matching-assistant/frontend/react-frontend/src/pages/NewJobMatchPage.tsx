@@ -1,0 +1,75 @@
+import { ChangeEvent, useRef, useState } from 'react';
+
+import { matchNewJob, uploadText } from '../api';
+import type { MatchResponse } from '../types';
+import { errorMessage } from '../ui';
+import { NewJobMatchView } from './NewJobMatchView';
+
+export function NewJobMatchPage() {
+  const cvTextRef = useRef<HTMLTextAreaElement>(null);
+  const jobTextRef = useRef<HTMLTextAreaElement>(null);
+  const [saveNewJobProfile, setSaveNewJobProfile] = useState(true);
+  const [loadingLabel, setLoadingLabel] = useState('');
+  const [error, setError] = useState('');
+  const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
+  const loading = Boolean(loadingLabel);
+
+  async function readUpload(event: ChangeEvent<HTMLInputElement>, kind: 'cv' | 'job') {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    await runTask(kind === 'cv' ? 'Reading CV file' : 'Reading job description', async () => {
+      const text = await uploadText(file, kind);
+      if (kind === 'cv' && cvTextRef.current) {
+        cvTextRef.current.value = text;
+      }
+      if (kind === 'job' && jobTextRef.current) {
+        jobTextRef.current.value = text;
+      }
+    });
+  }
+
+  async function calculateMatch(includeAllSavedJobs: boolean) {
+    const cvText = cvTextRef.current?.value.trim() ?? '';
+    const jobDescriptionText = jobTextRef.current?.value.trim() ?? '';
+    if (!cvText || !jobDescriptionText) {
+      setError('Add a CV and a job description.');
+      return;
+    }
+
+    await runTask(includeAllSavedJobs ? 'Calculating other fit' : 'Extracting job profile and matching', async () => {
+      const result = await matchNewJob(cvText, jobDescriptionText, saveNewJobProfile, includeAllSavedJobs);
+      setMatchResult(result);
+    });
+  }
+
+  async function runTask(label: string, task: () => Promise<void>) {
+    setError('');
+    setLoadingLabel(label);
+    try {
+      await task();
+    } catch (caughtError) {
+      setError(errorMessage(caughtError));
+    } finally {
+      setLoadingLabel('');
+    }
+  }
+
+  return (
+    <NewJobMatchView
+      cvTextRef={cvTextRef}
+      error={error}
+      jobTextRef={jobTextRef}
+      loading={loading}
+      loadingLabel={loadingLabel}
+      matchResult={matchResult}
+      onCalculateMatch={calculateMatch}
+      onSaveNewJobProfileChange={setSaveNewJobProfile}
+      onUploadCv={(event) => readUpload(event, 'cv')}
+      onUploadJob={(event) => readUpload(event, 'job')}
+      saveNewJobProfile={saveNewJobProfile}
+    />
+  );
+}
