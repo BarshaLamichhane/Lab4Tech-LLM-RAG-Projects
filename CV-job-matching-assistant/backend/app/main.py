@@ -77,6 +77,7 @@ def match_saved_job(request: MatchSavedJobRequest) -> dict:
             cv_text=request.cv_text,
             target_role=request.target_role,
             include_all_saved_jobs=request.include_all_saved_jobs,
+            skill_weights=request.skill_weights.model_dump() if request.skill_weights else None,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -90,6 +91,7 @@ def match_new_job(request: MatchNewJobRequest) -> dict:
             job_description_text=request.job_description_text,
             save_new_job_profile=request.save_new_job_profile,
             include_all_saved_jobs=request.include_all_saved_jobs,
+            skill_weights=request.skill_weights.model_dump() if request.skill_weights else None,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

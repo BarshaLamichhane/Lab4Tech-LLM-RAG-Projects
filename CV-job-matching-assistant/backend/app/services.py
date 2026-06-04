@@ -59,6 +59,7 @@ def build_saved_job_match(
     cv_text: str,
     target_role: str,
     include_all_saved_jobs: bool = False,
+    skill_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     if not cv_text.strip():
         raise ValueError("cv_text cannot be empty")
@@ -71,7 +72,7 @@ def build_saved_job_match(
         cv_text,
         job_profiles=list(saved_job_profiles.values()),
     )
-    target_match = calculate_skill_match(candidate_profile, target_job_profile)
+    target_match = calculate_skill_match(candidate_profile, target_job_profile, skill_weights=skill_weights)
 
     result = {
         "candidate_profile": candidate_profile.model_dump(),
@@ -83,7 +84,11 @@ def build_saved_job_match(
     if include_all_saved_jobs:
         result["all_saved_job_matches"] = [
             match_result.model_dump()
-            for match_result in rank_candidate_against_saved_jobs(candidate_profile, DEFAULT_JOB_SKILLS_DIR)
+            for match_result in rank_candidate_against_saved_jobs(
+                candidate_profile,
+                DEFAULT_JOB_SKILLS_DIR,
+                skill_weights=skill_weights,
+            )
         ]
 
     return result
@@ -94,6 +99,7 @@ def build_new_job_match(
     job_description_text: str,
     save_new_job_profile: bool = True,
     include_all_saved_jobs: bool = False,
+    skill_weights: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     if not cv_text.strip():
         raise ValueError("cv_text cannot be empty")
@@ -104,7 +110,7 @@ def build_new_job_match(
         cv_text,
         job_profiles=list(saved_job_profiles.values()) + [target_job_profile],
     )
-    target_match = calculate_skill_match(candidate_profile, target_job_profile)
+    target_match = calculate_skill_match(candidate_profile, target_job_profile, skill_weights=skill_weights)
 
     result = {
         "candidate_profile": candidate_profile.model_dump(),
@@ -116,7 +122,11 @@ def build_new_job_match(
     if include_all_saved_jobs:
         result["all_saved_job_matches"] = [
             match_result.model_dump()
-            for match_result in rank_candidate_against_saved_jobs(candidate_profile, DEFAULT_JOB_SKILLS_DIR)
+            for match_result in rank_candidate_against_saved_jobs(
+                candidate_profile,
+                DEFAULT_JOB_SKILLS_DIR,
+                skill_weights=skill_weights,
+            )
         ]
 
     return result

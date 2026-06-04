@@ -40,7 +40,6 @@ export function App() {
           </div>
         </div>
       </nav>
-
       <AppRoutes />
     </main>
   );

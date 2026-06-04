@@ -9,6 +9,7 @@ import type {
   MatchResponse,
   PreparationInterviewResponse,
   QuestionFocus,
+  SkillWeights,
 } from './types';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -58,6 +59,7 @@ export function matchSavedJob(
   cvText: string,
   targetRole: string,
   includeAllSavedJobs: boolean,
+  skillWeights?: SkillWeights,
 ): Promise<MatchResponse> {
   return requestJson<MatchResponse>('/api/match/saved-job', {
     method: 'POST',
@@ -65,6 +67,7 @@ export function matchSavedJob(
       cv_text: cvText,
       target_role: targetRole,
       include_all_saved_jobs: includeAllSavedJobs,
+      skill_weights: skillWeights,
     }),
   });
 }
@@ -74,6 +77,7 @@ export function matchNewJob(
   jobDescriptionText: string,
   saveNewJobProfile: boolean,
   includeAllSavedJobs: boolean,
+  skillWeights?: SkillWeights,
 ): Promise<MatchResponse> {
   return requestJson<MatchResponse>('/api/match/new-job', {
     method: 'POST',
@@ -82,6 +86,7 @@ export function matchNewJob(
       job_description_text: jobDescriptionText,
       save_new_job_profile: saveNewJobProfile,
       include_all_saved_jobs: includeAllSavedJobs,
+      skill_weights: skillWeights,
     }),
   });
 }

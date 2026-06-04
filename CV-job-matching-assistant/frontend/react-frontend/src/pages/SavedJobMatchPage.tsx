@@ -1,7 +1,8 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
 import { getRoles, matchSavedJob, uploadText } from '../api';
-import type { MatchResponse } from '../types';
+import { DEFAULT_SKILL_WEIGHTS } from '../components/SkillWeightSettings';
+import type { MatchResponse, SkillWeights } from '../types';
 import { errorMessage } from '../ui';
 import { SavedJobMatchView } from './SavedJobMatchView';
 
@@ -12,6 +13,8 @@ export function SavedJobMatchPage() {
   const [loadingLabel, setLoadingLabel] = useState('');
   const [error, setError] = useState('');
   const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
+  const [skillWeights, setSkillWeights] = useState<SkillWeights>(DEFAULT_SKILL_WEIGHTS);
+  const [weightsChanged, setWeightsChanged] = useState(false);
   const loading = Boolean(loadingLabel);
 
   useEffect(() => {
@@ -50,9 +53,15 @@ export function SavedJobMatchPage() {
     }
 
     await runTask(includeAllSavedJobs ? 'Calculating other fit' : 'Calculating match', async () => {
-      const result = await matchSavedJob(cvText, selectedRole, includeAllSavedJobs);
+      const result = await matchSavedJob(cvText, selectedRole, includeAllSavedJobs, skillWeights);
       setMatchResult(result);
+      setWeightsChanged(false);
     });
+  }
+
+  function updateSkillWeights(nextWeights: SkillWeights) {
+    setSkillWeights(nextWeights);
+    setWeightsChanged(true);
   }
 
   async function runTask(label: string, task: () => Promise<void>) {
@@ -77,9 +86,12 @@ export function SavedJobMatchPage() {
       onCalculateMatch={calculateMatch}
       onRefreshRoles={refreshRoles}
       onSelectedRoleChange={setSelectedRole}
+      onSkillWeightsChange={updateSkillWeights}
       onUploadCv={uploadCv}
       roles={roles}
       selectedRole={selectedRole}
+      skillWeights={skillWeights}
+      weightsChanged={weightsChanged}
     />
   );
 }

@@ -1,7 +1,8 @@
 import { ChangeEvent, RefObject } from 'react';
 
 import { MatchResult } from '../components/MatchResult';
-import type { MatchResponse } from '../types';
+import { SkillWeightSettings } from '../components/SkillWeightSettings';
+import type { MatchResponse, SkillWeights } from '../types';
 
 interface NewJobMatchViewProps {
   cvTextRef: RefObject<HTMLTextAreaElement | null>;
@@ -12,9 +13,12 @@ interface NewJobMatchViewProps {
   matchResult: MatchResponse | null;
   onCalculateMatch: (includeAllSavedJobs: boolean) => void;
   onSaveNewJobProfileChange: (saveNewJobProfile: boolean) => void;
+  onSkillWeightsChange: (weights: SkillWeights) => void;
   onUploadCv: (event: ChangeEvent<HTMLInputElement>) => void;
   onUploadJob: (event: ChangeEvent<HTMLInputElement>) => void;
   saveNewJobProfile: boolean;
+  skillWeights: SkillWeights;
+  weightsChanged: boolean;
 }
 
 export function NewJobMatchView({
@@ -26,9 +30,12 @@ export function NewJobMatchView({
   matchResult,
   onCalculateMatch,
   onSaveNewJobProfileChange,
+  onSkillWeightsChange,
   onUploadCv,
   onUploadJob,
   saveNewJobProfile,
+  skillWeights,
+  weightsChanged,
 }: NewJobMatchViewProps) {
   return (
     <>
@@ -65,6 +72,7 @@ export function NewJobMatchView({
             <input type="checkbox" checked={saveNewJobProfile} onChange={(event) => onSaveNewJobProfileChange(event.target.checked)} />
             <span>Save extracted profile</span>
           </label>
+          <SkillWeightSettings weights={skillWeights} weightsChanged={weightsChanged} onChange={onSkillWeightsChange} />
           <button className="primary-button" type="button" disabled={loading} onClick={() => onCalculateMatch(false)}>
             Calculate match
           </button>

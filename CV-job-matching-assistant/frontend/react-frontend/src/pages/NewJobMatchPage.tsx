@@ -1,7 +1,8 @@
 import { ChangeEvent, useRef, useState } from 'react';
 
 import { matchNewJob, uploadText } from '../api';
-import type { MatchResponse } from '../types';
+import { DEFAULT_SKILL_WEIGHTS } from '../components/SkillWeightSettings';
+import type { MatchResponse, SkillWeights } from '../types';
 import { errorMessage } from '../ui';
 import { NewJobMatchView } from './NewJobMatchView';
 
@@ -12,6 +13,8 @@ export function NewJobMatchPage() {
   const [loadingLabel, setLoadingLabel] = useState('');
   const [error, setError] = useState('');
   const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
+  const [skillWeights, setSkillWeights] = useState<SkillWeights>(DEFAULT_SKILL_WEIGHTS);
+  const [weightsChanged, setWeightsChanged] = useState(false);
   const loading = Boolean(loadingLabel);
 
   async function readUpload(event: ChangeEvent<HTMLInputElement>, kind: 'cv' | 'job') {
@@ -40,9 +43,15 @@ export function NewJobMatchPage() {
     }
 
     await runTask(includeAllSavedJobs ? 'Calculating other fit' : 'Extracting job profile and matching', async () => {
-      const result = await matchNewJob(cvText, jobDescriptionText, saveNewJobProfile, includeAllSavedJobs);
+      const result = await matchNewJob(cvText, jobDescriptionText, saveNewJobProfile, includeAllSavedJobs, skillWeights);
       setMatchResult(result);
+      setWeightsChanged(false);
     });
+  }
+
+  function updateSkillWeights(nextWeights: SkillWeights) {
+    setSkillWeights(nextWeights);
+    setWeightsChanged(true);
   }
 
   async function runTask(label: string, task: () => Promise<void>) {
@@ -67,9 +76,12 @@ export function NewJobMatchPage() {
       matchResult={matchResult}
       onCalculateMatch={calculateMatch}
       onSaveNewJobProfileChange={setSaveNewJobProfile}
+      onSkillWeightsChange={updateSkillWeights}
       onUploadCv={(event) => readUpload(event, 'cv')}
       onUploadJob={(event) => readUpload(event, 'job')}
       saveNewJobProfile={saveNewJobProfile}
+      skillWeights={skillWeights}
+      weightsChanged={weightsChanged}
     />
   );
 }

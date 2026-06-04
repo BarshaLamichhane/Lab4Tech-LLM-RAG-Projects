@@ -1,0 +1,87 @@
+
+###########################################
+1. Write a Python function that takes a list of integers and returns a new list with only the even numbers, using list comprehension.
+###########################################
+def get_even_numbers(numbers: list[int]) -> list[int]:
+    """Filters a list of integers and returns a new list containing only the even numbers."""
+    return [num for num in numbers if num % 2 == 0]
+
+# Sample dataset containing mixed values
+mixed_numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Execute the function
+even_numbers = get_even_numbers(mixed_numbers)
+
+print(even_numbers)
+###########################################
+###########################################
+2. Explain how Python's `asyncio` library works. Write a simple example of an asynchronous function that fetches data from two URLs concurrently.
+###########################################
+pythonimport asyncio
+import aiohttp
+
+async def fetch_page(session, url):
+    """Fetches text content from a URL asynchronously without blocking."""
+    print(f"Starting request for: {url}")
+    # The 'async with' context manager ensures resources are released asynchronously
+    async with session.get(url) as response:
+        data = await response.text()
+        print(f"Completed request for: {url}")
+        return data[:100]  # Return the first 100 characters
+
+async def main():
+    urls = [
+        "https://example.com",
+        "https://httpbin.org"
+    ]
+    
+    # Establish a persistent client session for connection pooling
+    async with aiohttp.ClientSession() as session:
+        # Create coroutine objects for both targets
+        task1 = fetch_page(session, urls[0])
+        task2 = fetch_page(session, urls[1])
+        
+        # Run both tasks concurrently and wait until all finish
+        results = await asyncio.gather(task1, task2)
+        
+        print("\n--- Summary Results ---")
+        for url, content in zip(urls, results):
+            print(f"URL: {url} -> Sample: {content}\n")
+
+if __name__ == "__main__":
+    # Initialize the event loop and pass the main entry point
+    asyncio.run(main())
+
+###########################################
+3. Explain the difference between a list and a tuple in Python. When would you use one over the other?
+###########################################
+A Tuple is an ordered, immutable collection of elements. Tuples are often used when data should not be modified after creation.
+
+Key Characteristics:
+
+Immutable: Once created, elements cannot be modified.
+Ordered: Maintains the order of elements.
+Allows Duplicates: Can contain duplicate values.
+Heterogeneous: Can store different data types.
+
+List in Python
+A List is a collection of ordered, mutable elements that can hold a variety of data types. Lists are one of the most commonly used data structures in Python due to their flexibility and ease of use.
+
+Key Characteristics:
+
+Mutable: Elements can be modified after creation.
+Ordered: Maintains the order of elements.
+Allows Duplicates: Can have multiple occurrences of the same value.
+Heterogeneous: Can store different data types.
+###########################################
+4. Write a Python class that implements a context manager for file operations using the `with` statement.
+###########################################
+def __enter__(self):
+        print('enter method called')
+        return self
+    
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        print('exit method called')
+
+with ContextManager() as manager:
+    print('with statement block')

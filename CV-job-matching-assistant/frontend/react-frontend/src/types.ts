@@ -16,6 +16,14 @@ export interface SkillMatch {
   matched_weight: number;
 }
 
+export interface SkillWeights {
+  strongly_required_skills: number;
+  required_skills: number;
+  tools_and_platforms: number;
+  preferred_skills: number;
+  soft_skills: number;
+}
+
 export interface MatchResponse {
   candidate_profile: CandidateProfile;
   target_job_match: SkillMatch;

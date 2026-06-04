@@ -1,7 +1,8 @@
 import { ChangeEvent, RefObject } from 'react';
 
 import { MatchResult } from '../components/MatchResult';
-import type { MatchResponse } from '../types';
+import { SkillWeightSettings } from '../components/SkillWeightSettings';
+import type { MatchResponse, SkillWeights } from '../types';
 
 interface SavedJobMatchViewProps {
   cvTextRef: RefObject<HTMLTextAreaElement | null>;
@@ -12,9 +13,12 @@ interface SavedJobMatchViewProps {
   onCalculateMatch: (includeAllSavedJobs: boolean) => void;
   onRefreshRoles: () => void;
   onSelectedRoleChange: (role: string) => void;
+  onSkillWeightsChange: (weights: SkillWeights) => void;
   onUploadCv: (event: ChangeEvent<HTMLInputElement>) => void;
   roles: string[];
   selectedRole: string;
+  skillWeights: SkillWeights;
+  weightsChanged: boolean;
 }
 
 export function SavedJobMatchView({
@@ -26,9 +30,12 @@ export function SavedJobMatchView({
   onCalculateMatch,
   onRefreshRoles,
   onSelectedRoleChange,
+  onSkillWeightsChange,
   onUploadCv,
   roles,
   selectedRole,
+  skillWeights,
+  weightsChanged,
 }: SavedJobMatchViewProps) {
   return (
     <>
@@ -69,6 +76,7 @@ export function SavedJobMatchView({
               </option>
             ))}
           </select>
+          <SkillWeightSettings weights={skillWeights} weightsChanged={weightsChanged} onChange={onSkillWeightsChange} />
           <button className="primary-button action-gap" type="button" disabled={loading} onClick={() => onCalculateMatch(false)}>
             Calculate match
           </button>

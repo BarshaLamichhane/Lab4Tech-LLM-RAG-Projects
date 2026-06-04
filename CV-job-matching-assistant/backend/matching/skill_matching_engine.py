@@ -115,15 +115,16 @@ def _skill_from_strongly_required_item(item: str | dict) -> str:
     return item
 
 
-def get_weighted_job_skills(job_profile: dict) -> dict[str, float]:
+def get_weighted_job_skills(job_profile: dict, skill_weights: dict[str, float] | None = None) -> dict[str, float]:
     """Flatten a job profile into unique skill names with their highest category weight."""
     weighted_skills = {}
+    weights = skill_weights or SKILL_WEIGHTS
 
     for item in job_profile.get("strongly_required_skills", []):
         skill = _skill_from_strongly_required_item(item)
-        _add_weighted_skill(weighted_skills, skill, SKILL_WEIGHTS["strongly_required_skills"])
+        _add_weighted_skill(weighted_skills, skill, weights["strongly_required_skills"])
 
-    for field_name, weight in SKILL_WEIGHTS.items():
+    for field_name, weight in weights.items():
         if field_name == "strongly_required_skills":
             continue
 
@@ -183,11 +184,12 @@ def _find_matching_candidate_skill(job_skill: str, candidate_skills: list[str]) 
 def calculate_skill_match(
     candidate_profile: CandidateSkillProfile | dict,
     job_profile: dict,
+    skill_weights: dict[str, float] | None = None,
 ) -> SkillMatchResult:
     """Calculate the weighted percentage match between a candidate and one job profile."""
     candidate_skills = candidate_profile.skills if isinstance(candidate_profile, CandidateSkillProfile) else candidate_profile.get("skills", [])
     candidate_skills = [normalize_skill(skill) for skill in candidate_skills if skill]
-    weighted_job_skills = get_weighted_job_skills(job_profile)
+    weighted_job_skills = get_weighted_job_skills(job_profile, skill_weights=skill_weights)
 
     matched_skills = []
     missing_skills = []
@@ -237,11 +239,12 @@ def calculate_skill_match(
 def rank_candidate_against_saved_jobs(
     candidate_profile: CandidateSkillProfile | dict,
     data_dir: Path = DEFAULT_JOB_SKILLS_DIR,
+    skill_weights: dict[str, float] | None = None,
 ) -> list[SkillMatchResult]:
     """Calculate percentage match against every saved extracted job profile."""
     job_profiles = load_saved_job_profiles(data_dir)
     results = [
-        calculate_skill_match(candidate_profile, job_profile)
+        calculate_skill_match(candidate_profile, job_profile, skill_weights=skill_weights)
         for job_profile in job_profiles.values()
     ]
 
