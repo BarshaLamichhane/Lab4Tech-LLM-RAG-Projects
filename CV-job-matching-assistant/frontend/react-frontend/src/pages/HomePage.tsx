@@ -4,8 +4,8 @@ export function HomePage() {
   return (
     <>
       <section className="home-hero">
-        <p className="eyebrow">AI Learning & Interview Assistant</p>
-        <h1>Extract skills, match roles, and prepare for interviews.</h1>
+        <p className="eyebrow">HireReadyAI</p>
+        <h1>Know your strengths. Find your perfect match. Land your dream job.</h1>
         <p>
           Use one workspace to understand job requirements, compare CVs with roles,
           and practise interview questions with scored feedback.
@@ -14,7 +14,10 @@ export function HomePage() {
 
       <section className="home-grid">
         <article className="home-card">
-          <span>Skill Extraction</span>
+          <div className="home-card-top">
+            <span>Skill Extraction</span>
+            <strong>01</strong>
+          </div>
           <h2>Job skill extraction</h2>
           <p>Extract structured job skills, strongly required skills, responsibilities, tools, and soft skills.</p>
           <div className="home-actions">
@@ -23,7 +26,10 @@ export function HomePage() {
         </article>
 
         <article className="home-card">
-          <span>Skill Matching</span>
+          <div className="home-card-top">
+            <span>Skill Matching</span>
+            <strong>02</strong>
+          </div>
           <h2>Compare CVs with target roles</h2>
           <p>Match a CV against saved job roles or a new job description and review matched and missing skills.</p>
           <div className="home-actions">
@@ -33,7 +39,10 @@ export function HomePage() {
         </article>
 
         <article className="home-card">
-          <span>Interview Assistant</span>
+          <div className="home-card-top">
+            <span>Interview Assistant</span>
+            <strong>03</strong>
+          </div>
           <h2>Preparation mode</h2>
           <p>Generate interview questions from selected skills, practise Python coding, and score answers.</p>
           <div className="home-actions">

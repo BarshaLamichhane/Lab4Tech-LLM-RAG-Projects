@@ -6,10 +6,11 @@ export function App() {
   return (
     <main className="workspace">
       <nav className="site-navbar" aria-label="Main navigation">
-        <NavLink className="brand-link" to="/">
-          AI Learning & Interview Assistant
-        </NavLink>
-
+        <div className="brand-stack">
+          <NavLink className="brand-link" to="/">
+            HireReadyAI
+          </NavLink>
+        </div>
         <div className="site-menu">
           <NavLink to="/" end>
             Home
