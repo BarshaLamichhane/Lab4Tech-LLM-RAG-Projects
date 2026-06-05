@@ -10,17 +10,16 @@
             "verbatim": "Proven experience designing and deploying LLM-based agents in production environments, including reasoning, tool use, and workflow orchestration"
         },
         {
+            "skill": "Agent frameworks",
+            "verbatim": "Hands-on experience with agent frameworks such as LangChain, LangGraph, CrewAI or similar"
+        },
+        {
             "skill": "RAG architectures",
             "verbatim": "Solid understanding of RAG architectures, including embeddings, vector databases, chunking, and retrieval strategies"
         }
     ],
     "required_skills": [
-        "Agent frameworks",
-        "AI platforms",
-        "API integration",
-        "Containerization",
-        "Infrastructure as Code",
-        "Observability practices"
+        "API integration (REST / GraphQL)"
     ],
     "preferred_skills": [],
     "soft_skills": [

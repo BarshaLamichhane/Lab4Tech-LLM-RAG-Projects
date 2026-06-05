@@ -27,23 +27,24 @@
         }
     ],
     "required_skills": [
-        "Building digital, automation, or AI-enabled solutions",
-        "Developing lightweight applications, workflows, or automation tools",
-        "Translating ambiguous business problems into working technical solutions",
-        "Working with non-technical stakeholders"
+        "Digital solution development",
+        "Automation tools",
+        "Technical solution design",
+        "Business problem translation"
     ],
     "preferred_skills": [
-        "Consulting or client-facing delivery environments",
+        "Consulting or client-facing delivery",
         "Sustainability, ESG, EHS, or operational reporting workflows",
         "LLM orchestration frameworks",
         "Responsible AI, governance, and data protection principles",
-        "Building reusable solutions adopted across teams or regions"
+        "Reusable solution development"
     ],
     "soft_skills": [
         "Strong communication skills",
+        "Ability to work directly with non-technical stakeholders",
         "Comfortable operating in fast-moving, loosely defined environments",
         "Collaboration",
-        "Independent work"
+        "Problem-solving"
     ],
     "tools_and_platforms": [
         "Power Platform",

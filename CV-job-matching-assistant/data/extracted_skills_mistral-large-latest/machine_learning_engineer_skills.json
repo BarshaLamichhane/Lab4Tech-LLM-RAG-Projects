@@ -2,20 +2,34 @@
     "role": "Machine Learning Engineer",
     "strongly_required_skills": [
         {
-            "skill": "Computer vision techniques (object detection, segmentation, image classification)",
+            "skill": "Computer vision techniques",
             "verbatim": "Solid understanding of computer vision techniques such as object detection, segmentation, and image classification"
+        },
+        {
+            "skill": "Cloud platforms",
+            "verbatim": "Strong experience working with cloud platforms (preferably AWS) for building and deploying AI/ML pipelines"
         }
     ],
     "required_skills": [
-        "Cloud platforms",
+        "Scalable AI/ML services and pipelines",
+        "Machine learning workflows",
         "Data preparation and labeling",
         "Model training and deployment",
-        "Designing scalable, fault-tolerant, and efficient systems",
+        "Production-grade machine learning systems",
+        "Reliability and scalability in AI/ML systems",
+        "Vision-based AI solutions",
+        "Fault-tolerant system design",
+        "Efficient system design",
         "Python",
         "machine learning"
     ],
     "preferred_skills": [
-        "Media, audio, video, or image processing workflows"
+        "AWS SageMaker",
+        "AWS Bedrock",
+        "NVIDIA AI platforms",
+        "Media processing workflows",
+        "Audio processing workflows",
+        "Video processing workflows"
     ],
     "soft_skills": [
         "Problem-solving",
@@ -27,6 +41,7 @@
         "Continuous learning"
     ],
     "tools_and_platforms": [
+        "AWS",
         "AWS SageMaker",
         "AWS Bedrock",
         "NVIDIA AI platforms"
