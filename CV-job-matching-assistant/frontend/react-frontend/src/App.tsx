@@ -1,8 +1,11 @@
 import { NavLink } from 'react-router-dom';
 
 import { AppRoutes } from './AppRoutes';
+import { useAuth } from './AuthContext';
 
 export function App() {
+  const { user, logout } = useAuth();
+
   return (
     <main className="workspace">
       <nav className="site-navbar" aria-label="Main navigation">
@@ -11,7 +14,7 @@ export function App() {
             HireReadyAI
           </NavLink>
         </div>
-        <div className="site-menu">
+        {user && <div className="site-menu">
           <NavLink to="/" end>
             Home
           </NavLink>
@@ -38,7 +41,11 @@ export function App() {
               <span className="nav-disabled">Adaptive interview</span>
             </div>
           </div>
-        </div>
+          <NavLink to="/sessions">Sessions</NavLink>
+          {user.role === 'admin' && <NavLink to="/admin/settings">Settings</NavLink>}
+          <span className="user-badge">{user.username} · {user.role}</span>
+          <button className="nav-logout" type="button" onClick={logout}>Sign out</button>
+        </div>}
       </nav>
       <AppRoutes />
     </main>

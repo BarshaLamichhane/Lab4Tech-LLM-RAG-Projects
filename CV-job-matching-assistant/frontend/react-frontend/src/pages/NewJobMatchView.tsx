@@ -6,6 +6,7 @@ import type { MatchResponse, SkillWeights } from '../types';
 
 interface NewJobMatchViewProps {
   cvTextRef: RefObject<HTMLTextAreaElement | null>;
+  defaultWeights: SkillWeights;
   error: string;
   jobTextRef: RefObject<HTMLTextAreaElement | null>;
   loading: boolean;
@@ -17,12 +18,14 @@ interface NewJobMatchViewProps {
   onUploadCv: (event: ChangeEvent<HTMLInputElement>) => void;
   onUploadJob: (event: ChangeEvent<HTMLInputElement>) => void;
   saveNewJobProfile: boolean;
+  showWeightSettings: boolean;
   skillWeights: SkillWeights;
   weightsChanged: boolean;
 }
 
 export function NewJobMatchView({
   cvTextRef,
+  defaultWeights,
   error,
   jobTextRef,
   loading,
@@ -34,6 +37,7 @@ export function NewJobMatchView({
   onUploadCv,
   onUploadJob,
   saveNewJobProfile,
+  showWeightSettings,
   skillWeights,
   weightsChanged,
 }: NewJobMatchViewProps) {
@@ -72,7 +76,9 @@ export function NewJobMatchView({
             <input type="checkbox" checked={saveNewJobProfile} onChange={(event) => onSaveNewJobProfileChange(event.target.checked)} />
             <span>Save extracted profile</span>
           </label>
-          <SkillWeightSettings weights={skillWeights} weightsChanged={weightsChanged} onChange={onSkillWeightsChange} />
+          {showWeightSettings
+            ? <SkillWeightSettings defaultWeights={defaultWeights} weights={skillWeights} weightsChanged={weightsChanged} onChange={onSkillWeightsChange} />
+            : <p className="muted-line">Matching uses the score weights configured by an administrator.</p>}
           <button className="primary-button" type="button" disabled={loading} onClick={() => onCalculateMatch(false)}>
             Calculate match
           </button>

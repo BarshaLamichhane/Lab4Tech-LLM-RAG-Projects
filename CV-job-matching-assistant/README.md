@@ -136,42 +136,70 @@ without python -m then your library is not inside venv of your current working d
 ---
 # Run Application
 
-## FastAPI backend
+The current primary application uses the FastAPI backend and React frontend. Run them in two separate terminals.
 
-From the repository root:
+Before starting, add the Mistral API key to `CV-job-matching-assistant/.env`:
+
+```env
+MISTRAL_API_KEY=your_mistral_api_key
+
+# Change these prototype login credentials before sharing the application.
+APP_ADMIN_USERNAME=admin
+APP_ADMIN_PASSWORD=admin123
+APP_USER_USERNAME=user
+APP_USER_PASSWORD=user123
+```
+
+## Terminal 1: FastAPI backend
+
+From the repository root, activate the Python virtual environment and start the backend:
+
+### Mac/Linux
 
 ```bash
+source venv/bin/activate
 cd CV-job-matching-assistant
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Backend health check:
+### Windows
+
+```bash
+venv\Scripts\activate
+cd CV-job-matching-assistant
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+Verify that the backend is running:
 
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
-## Angular frontend
+Expected response:
 
-In a second terminal:
-
-```bash
-cd CV-job-matching-assistant/frontend/angular-frontend
-npm install
-npm start
+```json
+{"status":"ok"}
 ```
 
-Open:
+The React application requires login:
+
+- Admins can run matching and interview practice, edit default score weights and aliases, and view their saved sessions.
+- Regular users can run matching and interview practice and view only their own saved sessions.
+- Matching and interview-preparation sessions are saved locally in `data/user_sessions.json`.
+- Admin settings are saved locally in `data/app_settings.json`; skill aliases update `data/taxonomies/skill_categories.json`.
+
+This is lightweight prototype authentication. Tokens are stored in memory and expire whenever the backend restarts. Use a database, password hashing, and a production identity provider before deployment.
+
+FastAPI documentation is available at:
 
 ```text
-http://localhost:4200/
+http://127.0.0.1:8000/docs
 ```
 
-The Angular UI calls the FastAPI backend at `http://localhost:8000`.
+## Terminal 2: React frontend
 
-## React frontend
-
-In a second terminal:
+The React frontend does not require the Python virtual environment.
 
 ```bash
 cd CV-job-matching-assistant/frontend/react-frontend
@@ -179,23 +207,51 @@ npm install
 npm run dev
 ```
 
-Open:
+Open the application:
 
 ```text
 http://localhost:5173/
 ```
 
-The React UI calls the FastAPI backend at `http://localhost:8000`.
+The React frontend calls the FastAPI backend at `http://localhost:8000`.
 
-## Existing Streamlit UIs
-
-The Streamlit apps are kept under `frontend/streamlit-ui/` for now:
+To use a backend running on a different port:
 
 ```bash
-streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-job-skill-extractor-mistral-api.py
-streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-cv-job-matching-engine.py
-streamlit run CV-job-matching-assistant/frontend/streamlit-ui/app-cv-job-matching-with-new-job.py
+VITE_API_BASE_URL=http://127.0.0.1:8010 npm run dev
 ```
+
+## Restart after code changes
+
+Vite updates React frontend changes automatically while `npm run dev` is running.
+
+Restart FastAPI after backend Python changes:
+
+```bash
+# Stop the backend with Ctrl+C, then run:
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+For automatic backend reload during development:
+
+```bash
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+## Port 8000 already in use
+
+On Mac/Linux, find and stop the process using port `8000`:
+
+```bash
+lsof -i :8000
+kill <PID>
+```
+
+Alternatively, start the backend on another port. If you do this, also update `API_BASE_URL` in `frontend/react-frontend/src/api.ts`.
+
+## Optional legacy frontends
+
+Angular and Streamlit interfaces remain in `frontend/`, but current UI development is focused on React.
 
 ---
 

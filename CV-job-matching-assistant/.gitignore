@@ -69,6 +69,8 @@ uploads/
 
 # Generated local data / exports
 data/extracted_skills_mistral-large-latest/
+data/app_settings.json
+data/user_sessions.json
 cv-match-result.json
 *-match-result.json
 job-profile.json

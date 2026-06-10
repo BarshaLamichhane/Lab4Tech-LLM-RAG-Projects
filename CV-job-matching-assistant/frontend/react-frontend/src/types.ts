@@ -14,6 +14,20 @@ export interface SkillMatch {
   candidate_skills: string[];
   total_possible_weight: number;
   matched_weight: number;
+  score_breakdown: SkillCategoryBreakdown[];
+}
+
+export interface SkillCategoryBreakdown {
+  category: string;
+  label: string;
+  weight: number;
+  matched_count: number;
+  total_count: number;
+  matched_weight: number;
+  total_weight: number;
+  contribution_percent: number;
+  matched_skills: string[];
+  missing_skills: string[];
 }
 
 export interface SkillWeights {
@@ -22,6 +36,27 @@ export interface SkillWeights {
   tools_and_platforms: number;
   preferred_skills: number;
   soft_skills: number;
+}
+
+export interface AuthUser {
+  token: string;
+  username: string;
+  role: 'admin' | 'user';
+}
+
+export interface AppSettings {
+  skill_weights: SkillWeights;
+  skill_aliases: Record<string, string>;
+  broad_skill_aliases: Record<string, string[]>;
+}
+
+export interface UserSession {
+  id: string;
+  username: string;
+  session_type: string;
+  title: string;
+  created_at: string;
+  payload: Record<string, unknown>;
 }
 
 export interface MatchResponse {

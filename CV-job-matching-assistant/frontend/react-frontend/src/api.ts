@@ -1,5 +1,7 @@
 import type {
   AnswerEvaluation,
+  AppSettings,
+  AuthUser,
   CodeRunResponse,
   ExtractJobSkillsResponse,
   InterviewContext,
@@ -10,17 +12,19 @@ import type {
   PreparationInterviewResponse,
   QuestionFocus,
   SkillWeights,
+  UserSession,
 } from './types';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set('Content-Type', 'application/json');
+  Object.entries(authHeader()).forEach(([key, value]) => headers.set(key, value));
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    headers,
   });
 
   if (!response.ok) {
@@ -29,6 +33,37 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+function authHeader(): Record<string, string> {
+  const saved = localStorage.getItem('hire-ready-user');
+  if (!saved) {
+    return {};
+  }
+  const user = JSON.parse(saved) as AuthUser;
+  return { Authorization: `Bearer ${user.token}` };
+}
+
+export function loginUser(username: string, password: string): Promise<AuthUser> {
+  return requestJson<AuthUser>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export function getAdminSettings(): Promise<AppSettings> {
+  return requestJson<AppSettings>('/api/admin/settings');
+}
+
+export function updateAdminSettings(settings: AppSettings): Promise<AppSettings> {
+  return requestJson<AppSettings>('/api/admin/settings', {
+    method: 'PUT',
+    body: JSON.stringify(settings),
+  });
+}
+
+export function getUserSessions(): Promise<UserSession[]> {
+  return requestJson<UserSession[]>('/api/sessions');
 }
 
 export async function getRoles(): Promise<string[]> {
@@ -43,6 +78,7 @@ export async function uploadText(file: File, kind: 'cv' | 'job'): Promise<string
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
+    headers: authHeader(),
     body: formData,
   });
 

@@ -1,21 +1,38 @@
-import { ChangeEvent, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
-import { matchNewJob, uploadText } from '../api';
-import { DEFAULT_SKILL_WEIGHTS } from '../components/SkillWeightSettings';
+import { getAdminSettings, matchNewJob, uploadText } from '../api';
+import { useAuth } from '../AuthContext';
 import type { MatchResponse, SkillWeights } from '../types';
 import { errorMessage } from '../ui';
 import { NewJobMatchView } from './NewJobMatchView';
 
 export function NewJobMatchPage() {
+  const { user } = useAuth();
   const cvTextRef = useRef<HTMLTextAreaElement>(null);
   const jobTextRef = useRef<HTMLTextAreaElement>(null);
   const [saveNewJobProfile, setSaveNewJobProfile] = useState(true);
   const [loadingLabel, setLoadingLabel] = useState('');
   const [error, setError] = useState('');
   const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
-  const [skillWeights, setSkillWeights] = useState<SkillWeights>(DEFAULT_SKILL_WEIGHTS);
+  const [defaultWeights, setDefaultWeights] = useState<SkillWeights>({
+    strongly_required_skills: 3,
+    required_skills: 2,
+    tools_and_platforms: 1.5,
+    preferred_skills: 1,
+    soft_skills: 0.5,
+  });
+  const [skillWeights, setSkillWeights] = useState<SkillWeights>(defaultWeights);
   const [weightsChanged, setWeightsChanged] = useState(false);
   const loading = Boolean(loadingLabel);
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      getAdminSettings().then((settings) => {
+        setDefaultWeights(settings.skill_weights);
+        setSkillWeights(settings.skill_weights);
+      }).catch((caughtError) => setError(errorMessage(caughtError)));
+    }
+  }, []);
 
   async function readUpload(event: ChangeEvent<HTMLInputElement>, kind: 'cv' | 'job') {
     const file = event.target.files?.[0];
@@ -43,14 +60,14 @@ export function NewJobMatchPage() {
     }
 
     await runTask(includeAllSavedJobs ? 'Calculating other fit' : 'Extracting job profile and matching', async () => {
-      const result = await matchNewJob(cvText, jobDescriptionText, saveNewJobProfile, includeAllSavedJobs, skillWeights);
+      const result = await matchNewJob(cvText, jobDescriptionText, saveNewJobProfile, includeAllSavedJobs, user?.role === 'admin' ? skillWeights : undefined);
       setMatchResult(result);
       setWeightsChanged(false);
     });
   }
 
-  function updateSkillWeights(nextWeights: SkillWeights) {
-    setSkillWeights(nextWeights);
+  function updateSkillWeights(weights: SkillWeights) {
+    setSkillWeights(weights);
     setWeightsChanged(true);
   }
 
@@ -69,6 +86,7 @@ export function NewJobMatchPage() {
   return (
     <NewJobMatchView
       cvTextRef={cvTextRef}
+      defaultWeights={defaultWeights}
       error={error}
       jobTextRef={jobTextRef}
       loading={loading}
@@ -80,6 +98,7 @@ export function NewJobMatchPage() {
       onUploadCv={(event) => readUpload(event, 'cv')}
       onUploadJob={(event) => readUpload(event, 'job')}
       saveNewJobProfile={saveNewJobProfile}
+      showWeightSettings={user?.role === 'admin'}
       skillWeights={skillWeights}
       weightsChanged={weightsChanged}
     />

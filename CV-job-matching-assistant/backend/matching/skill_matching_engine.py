@@ -38,6 +38,30 @@ SKILL_WEIGHTS = {
     "soft_skills": 0.5,
 }
 
+SKILL_CATEGORY_LABELS = {
+    "strongly_required_skills": "Strongly required",
+    "required_skills": "Required",
+    "tools_and_platforms": "Tools and platforms",
+    "preferred_skills": "Preferred",
+    "soft_skills": "Soft skills",
+}
+
+
+class SkillCategoryBreakdown(BaseModel):
+    """Score contribution for one job-skill category."""
+
+    category: str
+    label: str
+    weight: float
+    matched_count: int = 0
+    total_count: int = 0
+    matched_weight: float = 0.0
+    total_weight: float = 0.0
+    contribution_percent: float = 0.0
+    matched_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+
+
 class SkillMatchResult(BaseModel):
     """Percentage match result for one candidate against one job profile."""
 
@@ -50,6 +74,7 @@ class SkillMatchResult(BaseModel):
     candidate_skills: list[str] = Field(default_factory=list)
     total_possible_weight: float = 0.0
     matched_weight: float = 0.0
+    score_breakdown: list[SkillCategoryBreakdown] = Field(default_factory=list)
 
 
 def normalize_for_matching(value: str) -> str:
@@ -134,6 +159,74 @@ def get_weighted_job_skills(job_profile: dict, skill_weights: dict[str, float] |
     return weighted_skills
 
 
+def get_category_skill_breakdown(
+    job_profile: dict,
+    candidate_skills: list[str],
+    skill_weights: dict[str, float] | None = None,
+) -> list[SkillCategoryBreakdown]:
+    """Build score explanation rows for each weighted skill category."""
+    weights = skill_weights or SKILL_WEIGHTS
+    weighted_job_skills = get_weighted_job_skills(job_profile, skill_weights=weights)
+    total_possible_weight = sum(weighted_job_skills.values())
+    assigned_skills = set()
+    breakdown = []
+
+    for field_name, weight in weights.items():
+        category_skills = []
+        for skill in _job_skills_for_category(job_profile, field_name):
+            if skill in assigned_skills or weighted_job_skills.get(skill) != weight:
+                continue
+            category_skills.append(skill)
+            assigned_skills.add(skill)
+
+        matched_skills = []
+        missing_skills = []
+
+        for skill in category_skills:
+            if _find_matching_candidate_skill(skill, candidate_skills):
+                matched_skills.append(skill)
+            else:
+                missing_skills.append(skill)
+
+        matched_weight = len(matched_skills) * weight
+        total_weight = len(category_skills) * weight
+        contribution_percent = 0.0
+        if total_possible_weight:
+            contribution_percent = round((matched_weight / total_possible_weight) * 100, 2)
+
+        breakdown.append(
+            SkillCategoryBreakdown(
+                category=field_name,
+                label=SKILL_CATEGORY_LABELS.get(field_name, field_name.replace("_", " ").title()),
+                weight=round(weight, 2),
+                matched_count=len(matched_skills),
+                total_count=len(category_skills),
+                matched_weight=round(matched_weight, 2),
+                total_weight=round(total_weight, 2),
+                contribution_percent=contribution_percent,
+                matched_skills=sorted(matched_skills, key=str.lower),
+                missing_skills=sorted(missing_skills, key=str.lower),
+            )
+        )
+
+    return breakdown
+
+
+def _job_skills_for_category(job_profile: dict, field_name: str) -> list[str]:
+    if field_name == "strongly_required_skills":
+        return [
+            normalize_skill(_skill_from_strongly_required_item(item))
+            for item in job_profile.get(field_name, [])
+            if _skill_from_strongly_required_item(item)
+        ]
+
+    return [
+        normalize_skill(skill)
+        for skill in job_profile.get(field_name, [])
+        if isinstance(skill, str) and skill.strip()
+    ]
+
+
 def _add_weighted_skill(weighted_skills: dict[str, float], skill: str, weight: float) -> None:
     """Add a skill to the weighted skill map, keeping the strongest weight for duplicates."""
     normalized_skill = normalize_skill(skill)
@@ -190,6 +283,11 @@ def calculate_skill_match(
     candidate_skills = candidate_profile.skills if isinstance(candidate_profile, CandidateSkillProfile) else candidate_profile.get("skills", [])
     candidate_skills = [normalize_skill(skill) for skill in candidate_skills if skill]
     weighted_job_skills = get_weighted_job_skills(job_profile, skill_weights=skill_weights)
+    score_breakdown = get_category_skill_breakdown(
+        job_profile,
+        candidate_skills,
+        skill_weights=skill_weights,
+    )
 
     matched_skills = []
     missing_skills = []
@@ -233,6 +331,7 @@ def calculate_skill_match(
         candidate_skills=sorted(candidate_skills, key=str.lower),
         total_possible_weight=round(total_possible_weight, 2),
         matched_weight=round(matched_weight, 2),
+        score_breakdown=score_breakdown,
     )
 
 

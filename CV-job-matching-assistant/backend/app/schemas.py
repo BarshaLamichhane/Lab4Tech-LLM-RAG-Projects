@@ -6,11 +6,28 @@ from pydantic import BaseModel, Field
 
 
 class SkillWeights(BaseModel):
-    strongly_required_skills: float = 3.0
-    required_skills: float = 2.0
-    tools_and_platforms: float = 1.5
-    preferred_skills: float = 1.0
-    soft_skills: float = 0.5
+    strongly_required_skills: float = Field(default=3.0, ge=0)
+    required_skills: float = Field(default=2.0, ge=0)
+    tools_and_platforms: float = Field(default=1.5, ge=0)
+    preferred_skills: float = Field(default=1.0, ge=0)
+    soft_skills: float = Field(default=0.5, ge=0)
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    username: str
+    role: str
+
+
+class AppSettings(BaseModel):
+    skill_weights: SkillWeights
+    skill_aliases: dict[str, str] = Field(default_factory=dict)
+    broad_skill_aliases: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class MatchSavedJobRequest(BaseModel):

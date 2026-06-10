@@ -1,16 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import type { SkillWeights } from '../types';
 
-export const DEFAULT_SKILL_WEIGHTS: SkillWeights = {
-  strongly_required_skills: 3,
-  required_skills: 2,
-  tools_and_platforms: 1.5,
-  preferred_skills: 1,
-  soft_skills: 0.5,
-};
-
 interface SkillWeightSettingsProps {
+  defaultWeights: SkillWeights;
   weights: SkillWeights;
   weightsChanged: boolean;
   onChange: (weights: SkillWeights) => void;
@@ -24,38 +18,33 @@ const WEIGHT_FIELDS: { key: keyof SkillWeights; label: string }[] = [
   { key: 'soft_skills', label: 'Soft skills' },
 ];
 
-export function SkillWeightSettings({ weights, weightsChanged, onChange }: SkillWeightSettingsProps) {
+export function SkillWeightSettings({
+  defaultWeights,
+  weights,
+  weightsChanged,
+  onChange,
+}: SkillWeightSettingsProps) {
   const [open, setOpen] = useState(false);
 
   function updateWeight(key: keyof SkillWeights, value: number) {
-    onChange({
-      ...weights,
-      [key]: value,
-    });
+    onChange({ ...weights, [key]: value });
   }
 
   return (
     <div className="weight-settings">
       <div className="weight-settings-heading">
         <div>
-          <h3>Advanced scoring</h3>
-          <p>Default score weights are applied. Customize, then calculate again to refresh the score.</p>
+          <h3>Admin score override</h3>
+          <p>Optionally adjust weights for this match only.</p>
         </div>
         <button className="ghost-button" type="button" onClick={() => setOpen((current) => !current)}>
-          {open ? 'Hide weights' : 'Customize weights'}
+          {open ? 'Hide weights' : 'Adjust weights'}
         </button>
       </div>
 
       {open && (
         <div className="weight-settings-body">
-          <div className="weight-defaults-note">
-            Default: Strongly required 3.0, Required 2.0, Tools 1.5, Preferred 1.0, Soft skills 0.5
-          </div>
-          {weightsChanged && (
-            <div className="weight-pending-note">
-              Custom weights selected. Click Calculate match to refresh the score.
-            </div>
-          )}
+          {weightsChanged && <div className="weight-pending-note">Click Calculate match to apply these weights.</div>}
           {WEIGHT_FIELDS.map((field) => (
             <label className="weight-row" key={field.key}>
               <span>{field.label}</span>
@@ -70,9 +59,12 @@ export function SkillWeightSettings({ weights, weightsChanged, onChange }: Skill
               <strong>{weights[field.key].toFixed(1)}</strong>
             </label>
           ))}
-          <button className="ghost-button weight-reset-button" type="button" onClick={() => onChange(DEFAULT_SKILL_WEIGHTS)}>
-            Reset to defaults
-          </button>
+          <div className="weight-actions">
+            <button className="ghost-button" type="button" onClick={() => onChange(defaultWeights)}>
+              Reset to saved defaults
+            </button>
+            <Link to="/admin/settings">For default weights, aliases, and more settings, go to Settings.</Link>
+          </div>
         </div>
       )}
     </div>
