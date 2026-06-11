@@ -22,6 +22,56 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_JOB_SKILLS_DIR = PROJECT_ROOT / "data" / "extracted_skills_mistral-large-latest"
 ESCO_TERMS_PATH = PROJECT_ROOT / "data" / "taxonomies" / "esco" / "skills_en_terms.txt"
 SKILL_CATEGORIES_PATH = PROJECT_ROOT / "data" / "taxonomies" / "skill_categories.json"
+PROJECT_SECTION_HEADINGS = {
+    "projects",
+    "project experience",
+    "personal projects",
+    "academic projects",
+    "selected projects",
+    "key projects",
+}
+CV_SECTION_HEADINGS = PROJECT_SECTION_HEADINGS | {
+    "education",
+    "experience",
+    "professional experience",
+    "work experience",
+    "employment",
+    "skills",
+    "technical skills",
+    "certifications",
+    "awards",
+    "publications",
+    "languages",
+    "interests",
+    "summary",
+    "profile",
+}
+OUTCOME_TERMS = {
+    "achieved",
+    "improved",
+    "increased",
+    "reduced",
+    "decreased",
+    "saved",
+    "delivered",
+    "resulted",
+    "accuracy",
+    "performance",
+    "latency",
+    "users",
+}
+
+
+class CandidateProject(BaseModel):
+    """One project parsed from an explicitly labelled CV project section."""
+
+    name: str
+    description: str = ""
+    role: str = ""
+    skills: list[str] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
+    outcomes: list[str] = Field(default_factory=list)
+    links: list[str] = Field(default_factory=list)
 
 
 class CandidateSkillProfile(BaseModel):
@@ -30,6 +80,7 @@ class CandidateSkillProfile(BaseModel):
     email: str | None = None
     estimated_experience_years: int = 0
     skills: list[str] = Field(default_factory=list)
+    projects: list[CandidateProject] = Field(default_factory=list)
 
 
 def normalize_text(value: str) -> str:
@@ -147,11 +198,11 @@ def build_skill_vocabulary(
     vocabulary.extend(skill_aliases.values())
     vocabulary.extend(_expand_composite_skill_variants(vocabulary))
 
-    unique_vocabulary = {
-        normalize_skill(skill)
+    unique_vocabulary = _unique_skills(
+        skill
         for skill in vocabulary
         if skill and normalize_text(normalize_skill(skill)) not in generic_skill_terms
-    }
+    )
 
     return sorted(unique_vocabulary, key=lambda skill: (len(skill.split()), skill.lower()), reverse=True)
 
@@ -199,13 +250,172 @@ def extract_skills_from_text(cv_text: str, vocabulary: list[str] | None = None) 
         if _skill_pattern(alias).search(normalized_cv_text):
             found_skills.append(canonical_skill)
 
-    unique_skills = {
-        normalize_skill(skill)
+    unique_skills = _unique_skills(
+        skill
         for skill in found_skills
         if skill and normalize_text(normalize_skill(skill)) not in generic_skill_terms
-    }
+    )
 
     return sorted(unique_skills, key=str.lower)
+
+
+def _unique_skills(skills) -> list[str]:
+    """Deduplicate skills case-insensitively while preserving readable labels."""
+    unique = {}
+    for skill in skills:
+        normalized_skill = normalize_skill(skill)
+        key = normalize_text(normalized_skill)
+        if key and key not in unique:
+            unique[key] = normalized_skill
+    return list(unique.values())
+
+
+def extract_projects_from_text(
+    cv_text: str,
+    vocabulary: list[str] | None = None,
+) -> list[CandidateProject]:
+    """Parse structured projects without an LLM from an explicitly named project section."""
+    project_lines = _project_section_lines(cv_text)
+    if not project_lines:
+        return []
+
+    skill_vocabulary = vocabulary if vocabulary is not None else build_skill_vocabulary()
+    projects = []
+    for block in _project_blocks(project_lines):
+        project = _project_from_block(block, skill_vocabulary)
+        if project:
+            projects.append(project)
+    return projects
+
+
+def _project_section_lines(cv_text: str) -> list[str]:
+    lines = [line.strip() for line in cv_text.splitlines()]
+    section_start = None
+    for index, line in enumerate(lines):
+        if _heading_key(line) in PROJECT_SECTION_HEADINGS:
+            section_start = index + 1
+            break
+    if section_start is None:
+        return []
+
+    section_lines = []
+    for line in lines[section_start:]:
+        if line and _heading_key(line) in CV_SECTION_HEADINGS:
+            break
+        section_lines.append(line)
+    return section_lines
+
+
+def _project_blocks(lines: list[str]) -> list[list[str]]:
+    blocks = []
+    current = []
+    for line in lines:
+        if not line:
+            if current:
+                blocks.append(current)
+                current = []
+            continue
+        if current and _looks_like_project_title(line) and any(_is_bullet(item) for item in current[1:]):
+            blocks.append(current)
+            current = []
+        current.append(line)
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def _project_from_block(block: list[str], vocabulary: list[str]) -> CandidateProject | None:
+    if not block:
+        return None
+    name = _clean_project_name(block[0])
+    if not name or _is_bullet(block[0]) or _label_value(block[0], "role") is not None:
+        return None
+
+    links = sorted(set(re.findall(r"https?://[^\s,;]+|www\.[^\s,;]+", "\n".join(block))))
+    role = ""
+    descriptions = []
+    responsibilities = []
+    outcomes = []
+
+    for raw_line in block[1:]:
+        line = _strip_bullet(raw_line)
+        if not line:
+            continue
+        role_value = _label_value(line, "role")
+        if role_value is not None:
+            role = role_value
+            continue
+        if re.match(r"^(technologies|technology|tech stack|tools|skills)\s*:", line, re.IGNORECASE):
+            continue
+        line_without_links = re.sub(r"https?://[^\s,;]+|www\.[^\s,;]+", "", line).strip(" -|,;")
+        if not line_without_links:
+            continue
+        if _is_outcome(line_without_links):
+            outcomes.append(line_without_links)
+        elif _is_bullet(raw_line):
+            responsibilities.append(line_without_links)
+        else:
+            descriptions.append(line_without_links)
+
+    block_text = "\n".join(block)
+    return CandidateProject(
+        name=name,
+        description=" ".join(descriptions),
+        role=role,
+        skills=extract_skills_from_text(block_text, vocabulary=vocabulary),
+        responsibilities=_unique_lines(responsibilities),
+        outcomes=_unique_lines(outcomes),
+        links=links,
+    )
+
+
+def _heading_key(line: str) -> str:
+    return re.sub(r"[^a-z ]+", "", line.casefold()).strip()
+
+
+def _looks_like_project_title(line: str) -> bool:
+    stripped = line.strip()
+    return (
+        bool(stripped)
+        and not _is_bullet(stripped)
+        and len(stripped) <= 120
+        and not stripped.endswith((".", ";"))
+        and not re.match(
+            r"^(role|technologies|technology|tech stack|tools|skills|description|responsibilities|outcomes?)\s*:",
+            stripped,
+            re.IGNORECASE,
+        )
+    )
+
+
+def _clean_project_name(line: str) -> str:
+    without_links = re.sub(r"https?://[^\s,;]+|www\.[^\s,;]+", "", line)
+    return re.sub(r"\s*[|–—]\s*(?:19|20)\d{2}.*$", "", without_links).strip(" -|–—")
+
+
+def _is_bullet(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[-*•▪◦]|(?:\d+)[.)])\s+", line))
+
+
+def _strip_bullet(line: str) -> str:
+    return re.sub(r"^\s*(?:[-*•▪◦]|(?:\d+)[.)])\s+", "", line).strip()
+
+
+def _label_value(line: str, label: str) -> str | None:
+    match = re.match(rf"^{re.escape(label)}\s*:\s*(.+)$", line, re.IGNORECASE)
+    return match.group(1).strip() if match else None
+
+
+def _is_outcome(line: str) -> bool:
+    normalized = normalize_text(line)
+    return bool(re.search(r"\b\d+(?:\.\d+)?\s*%", line)) or any(
+        re.search(rf"\b{re.escape(term)}\b", normalized)
+        for term in OUTCOME_TERMS
+    )
+
+
+def _unique_lines(lines: list[str]) -> list[str]:
+    return list(dict.fromkeys(line for line in lines if line))
 
 
 def extract_candidate_skill_profile(
@@ -224,6 +434,7 @@ def extract_candidate_skill_profile(
         email=cv_analysis.get("email"),
         estimated_experience_years=cv_analysis.get("estimated_experience_years", 0),
         skills=extract_skills_from_text(cv_text, vocabulary=vocabulary),
+        projects=extract_projects_from_text(cv_text, vocabulary=vocabulary),
     )
 
 

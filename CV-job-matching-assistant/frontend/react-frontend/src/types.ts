@@ -1,7 +1,18 @@
+export interface CandidateProject {
+  name: string;
+  description: string;
+  role: string;
+  skills: string[];
+  responsibilities: string[];
+  outcomes: string[];
+  links: string[];
+}
+
 export interface CandidateProfile {
   email: string | null;
   estimated_experience_years: number;
   skills: string[];
+  projects: CandidateProject[];
 }
 
 export interface SkillMatch {
@@ -39,7 +50,6 @@ export interface SkillWeights {
 }
 
 export interface AuthUser {
-  token: string;
   username: string;
   role: 'admin' | 'user';
 }
@@ -56,6 +66,8 @@ export interface UserSession {
   session_type: string;
   title: string;
   created_at: string;
+  updated_at: string;
+  status: 'in_progress' | 'paused' | 'completed';
   payload: Record<string, unknown>;
 }
 
@@ -71,9 +83,11 @@ export interface ExtractJobSkillsResponse {
   saved_path: string | null;
 }
 
-export type QuestionType = 'technical' | 'behavioral' | 'project' | 'gap' | 'role_fit';
+export type QuestionType = 'technical' | 'coding' | 'behavioral' | 'project' | 'gap' | 'role_fit';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type InterviewEngine = 'mistral';
+export type PreparationLevel = 'beginner' | 'intermediate' | 'advanced';
+export type PreparationInterviewType = 'technical_theory' | 'coding' | 'project' | 'behavioral' | 'mixed';
 export type QuestionFocus =
   | 'all'
   | 'matched_strongly_required'
@@ -103,9 +117,13 @@ export interface InterviewQuestion {
   difficulty: Difficulty;
   skill: string | null;
   source_group: QuestionFocus | null;
+  is_coding: boolean;
+  criteria_source: 'llm' | 'template';
   expected_points: string[];
+  expected_point_weights: number[];
   follow_up_questions: string[];
   scoring_rubric: string[];
+  hint: string;
 }
 
 export interface LearningPathItem {
@@ -127,6 +145,8 @@ export interface InterviewPlan {
   interview_rounds: string[];
   questions: InterviewQuestion[];
   learning_path: LearningPathItem[];
+  preparation_level?: PreparationLevel;
+  interview_type?: PreparationInterviewType;
 }
 
 export interface BuildInterviewPlanResponse {
@@ -134,9 +154,28 @@ export interface BuildInterviewPlanResponse {
   interview_plan: InterviewPlan;
 }
 
+export interface InterviewPracticeSessionPayload {
+  plan_response: BuildInterviewPlanResponse;
+  answers_by_question: Record<string, string>;
+  code_by_question: Record<string, string>;
+  evaluations: Record<string, AnswerEvaluation>;
+  learning_path: LearningPathItem[];
+  current_question_index: number;
+  notes_by_question: Record<string, string>;
+  bookmarked_question_ids: string[];
+  retry_counts: Record<string, number>;
+  elapsed_seconds: number;
+}
+
+export interface InterviewPracticeSession extends Omit<UserSession, 'payload'> {
+  payload: InterviewPracticeSessionPayload;
+}
+
 export interface PreparationInterviewResponse {
   role: string;
   selected_skills: string[];
+  level: PreparationLevel;
+  interview_type: PreparationInterviewType;
   questions: InterviewQuestion[];
 }
 
@@ -157,4 +196,34 @@ export interface AnswerEvaluation {
   improved_answer_outline: string[];
   follow_up_question: string | null;
   learning_recommendations: string[];
+  expected_point_assessments: ExpectedPointAssessment[];
+  score_breakdown: ScoreBreakdownItem[];
+}
+
+export interface ExpectedPointAssessment {
+  point: string;
+  weight: number;
+  awarded_score: number;
+  explanation: string;
+}
+
+export interface ScoreBreakdownItem {
+  category: 'technical_correctness' | 'completeness' | 'communication' | 'examples' | 'code_quality';
+  label: string;
+  max_score: number;
+  awarded_score: number;
+  explanation: string;
+}
+
+export interface InterviewProgressDashboard {
+  sessions: number;
+  answered_questions: number;
+  overall_average: number;
+  average_by_skill: { skill: string; average_score: number; attempts: number }[];
+  average_by_type: { type: string; average_score: number; attempts: number }[];
+  score_trend: { date: string; role: string; average_score: number }[];
+  strongest_topics: { skill: string; average_score: number; attempts: number }[];
+  weakest_topics: { skill: string; average_score: number; attempts: number }[];
+  retry_questions: { session_id: string; question_id: string; question: string; skill: string; score: number }[];
+  recommended_next_session: { skills: string[]; reason: string };
 }

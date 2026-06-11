@@ -7,47 +7,70 @@ import type {
   InterviewContext,
   InterviewEngine,
   InterviewQuestion,
+  InterviewPracticeSession,
+  InterviewPracticeSessionPayload,
+  InterviewProgressDashboard,
   LearningPathItem,
   MatchResponse,
   PreparationInterviewResponse,
   QuestionFocus,
+  PreparationInterviewType,
+  PreparationLevel,
   SkillWeights,
   UserSession,
 } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set('Content-Type', 'application/json');
-  Object.entries(authHeader()).forEach(([key, value]) => headers.set(key, value));
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
+    credentials: 'include',
     headers,
   });
 
   if (!response.ok) {
+    if (response.status === 401 && path !== '/api/auth/login') {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     const errorBody = await response.json().catch(() => null);
     throw new Error(errorBody?.detail ?? `Request failed with ${response.status}`);
   }
 
-  return response.json() as Promise<T>;
-}
-
-function authHeader(): Record<string, string> {
-  const saved = localStorage.getItem('hire-ready-user');
-  if (!saved) {
-    return {};
+  if (response.status === 204) {
+    return undefined as T;
   }
-  const user = JSON.parse(saved) as AuthUser;
-  return { Authorization: `Bearer ${user.token}` };
+  return response.json() as Promise<T>;
 }
 
 export function loginUser(username: string, password: string): Promise<AuthUser> {
   return requestJson<AuthUser>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ username, password }),
+  });
+}
+
+export function getCurrentUser(): Promise<AuthUser> {
+  return requestJson<AuthUser>('/api/auth/me');
+}
+
+export async function logoutUser(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+}
+
+export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  return requestJson<void>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
   });
 }
 
@@ -62,8 +85,49 @@ export function updateAdminSettings(settings: AppSettings): Promise<AppSettings>
   });
 }
 
+export function createUser(
+  username: string,
+  password: string,
+  role: AuthUser['role'],
+): Promise<AuthUser> {
+  return requestJson<AuthUser>('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify({ username, password, role }),
+  });
+}
+
 export function getUserSessions(): Promise<UserSession[]> {
   return requestJson<UserSession[]>('/api/sessions');
+}
+
+export function getInterviewSessions(): Promise<InterviewPracticeSession[]> {
+  return requestJson<InterviewPracticeSession[]>('/api/interview/sessions');
+}
+
+export function getInterviewProgress(): Promise<InterviewProgressDashboard> {
+  return requestJson<InterviewProgressDashboard>('/api/interview/progress');
+}
+
+export function createInterviewSession(
+  title: string,
+  payload: InterviewPracticeSessionPayload,
+): Promise<InterviewPracticeSession> {
+  return requestJson<InterviewPracticeSession>('/api/interview/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ title, status: 'in_progress', payload }),
+  });
+}
+
+export function updateInterviewSession(
+  sessionId: string,
+  title: string,
+  status: InterviewPracticeSession['status'],
+  payload: InterviewPracticeSessionPayload,
+): Promise<InterviewPracticeSession> {
+  return requestJson<InterviewPracticeSession>(`/api/interview/sessions/${sessionId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ title, status, payload }),
+  });
 }
 
 export async function getRoles(): Promise<string[]> {
@@ -78,11 +142,14 @@ export async function uploadText(file: File, kind: 'cv' | 'job'): Promise<string
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
-    headers: authHeader(),
+    credentials: 'include',
     body: formData,
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     const errorBody = await response.json().catch(() => null);
     throw new Error(errorBody?.detail ?? `Upload failed with ${response.status}`);
   }
@@ -160,17 +227,55 @@ export function buildInterviewContext(
 export function generatePreparationInterview(
   role: string,
   selectedSkills: string[],
+  candidateProjects: Record<string, unknown>[],
   questionCount: number,
-  level = 'intermediate',
+  level: PreparationLevel,
+  interviewType: PreparationInterviewType,
 ): Promise<PreparationInterviewResponse> {
   return requestJson<PreparationInterviewResponse>('/api/interview/preparation', {
     method: 'POST',
     body: JSON.stringify({
       role,
       selected_skills: selectedSkills,
+      candidate_projects: candidateProjects,
       question_count: questionCount,
       level,
+      interview_type: interviewType,
     }),
+  });
+}
+
+export function regeneratePreparationQuestion(
+  role: string,
+  selectedSkills: string[],
+  candidateProjects: Record<string, unknown>[],
+  level: PreparationLevel,
+  interviewType: PreparationInterviewType,
+  questionId: string,
+  existingQuestions: InterviewQuestion[],
+): Promise<InterviewQuestion> {
+  return requestJson<InterviewQuestion>('/api/interview/preparation/regenerate', {
+    method: 'POST',
+    body: JSON.stringify({
+      role,
+      selected_skills: selectedSkills,
+      candidate_projects: candidateProjects,
+      level,
+      interview_type: interviewType,
+      question_id: questionId,
+      existing_questions: existingQuestions,
+    }),
+  });
+}
+
+export function reportInterviewQuestion(
+  question: InterviewQuestion,
+  reason: 'irrelevant' | 'incorrect' | 'duplicate' | 'poor_quality' | 'other',
+  comment = '',
+): Promise<{ id: string; status: string }> {
+  return requestJson('/api/interview/questions/report', {
+    method: 'POST',
+    body: JSON.stringify({ question, reason, comment }),
   });
 }
 

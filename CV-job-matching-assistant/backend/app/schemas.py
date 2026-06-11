@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +19,22 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    token: str
+    username: str
+    role: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class CreateUserRequest(BaseModel):
+    username: str = Field(min_length=3, max_length=80)
+    password: str = Field(min_length=12)
+    role: Literal["admin", "user"] = "user"
+
+
+class UserResponse(BaseModel):
     username: str
     role: str
 
@@ -60,3 +75,17 @@ class MatchResponse(BaseModel):
 class ExtractJobSkillsResponse(BaseModel):
     job_profile: dict[str, Any]
     saved_path: str | None = None
+
+
+class InterviewSessionRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=160)
+    status: Literal["in_progress", "paused", "completed"] = "in_progress"
+    payload: dict[str, Any]
+
+
+class InterviewSessionResponse(InterviewSessionRequest):
+    id: str
+    username: str
+    session_type: str
+    created_at: str
+    updated_at: str

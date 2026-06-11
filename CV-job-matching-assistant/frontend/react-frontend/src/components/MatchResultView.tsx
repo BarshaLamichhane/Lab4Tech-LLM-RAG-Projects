@@ -140,6 +140,34 @@ export function MatchResultView({ onDownload, result }: MatchResultViewProps) {
         </div>
       </section>
 
+      {result.candidate_profile.projects?.length > 0 && (
+        <section className="panel table-panel">
+          <div className="panel-heading">
+            <h2>Candidate projects</h2>
+            <span className="count">{result.candidate_profile.projects.length} extracted</span>
+          </div>
+          <div className="candidate-project-grid">
+            {result.candidate_profile.projects.map((project) => (
+              <article className="candidate-project" key={`${project.name}-${project.role}`}>
+                <div className="panel-heading">
+                  <div>
+                    <h3>{project.name}</h3>
+                    {project.role && <p className="muted-line">{project.role}</p>}
+                  </div>
+                  {project.links[0] && <a href={project.links[0].startsWith('http') ? project.links[0] : `https://${project.links[0]}`} rel="noreferrer" target="_blank">Open project</a>}
+                </div>
+                {project.description && <p>{project.description}</p>}
+                {project.skills.length > 0 && <div className="chips">{project.skills.map((skill) => <span key={skill}>{skill}</span>)}</div>}
+                <div className="project-detail-grid">
+                  {project.responsibilities.length > 0 && <div><h3>Responsibilities</h3>{skillList(project.responsibilities)}</div>}
+                  {project.outcomes.length > 0 && <div><h3>Outcomes</h3>{skillList(project.outcomes)}</div>}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {result.all_saved_job_matches.length > 0 && (
         <section className="panel table-panel">
           <h2>Match against all saved jobs</h2>

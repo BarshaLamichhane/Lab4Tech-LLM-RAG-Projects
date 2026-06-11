@@ -5,13 +5,17 @@ import { useAuth } from '../AuthContext';
 import { errorMessage } from '../ui';
 
 export function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, isLoading, login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (user) {
+  if (isLoading) {
+    return <section className="status-row"><div className="status loading">Checking session...</div></section>;
+  }
+
+  if (!isLoading && user) {
     return <Navigate to="/" replace />;
   }
 
@@ -41,7 +45,7 @@ export function LoginPage() {
         <button className="primary-button action-gap" disabled={loading} type="submit">
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
-        <p className="login-hint">Prototype accounts are configured through backend environment variables.</p>
+        <p className="login-hint">Your secure session expires automatically. Contact an administrator if you need an account.</p>
       </form>
     </section>
   );

@@ -3,10 +3,15 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   buildInterviewContext,
   buildLearningPath,
+  createInterviewSession,
   evaluateInterviewAnswer,
   generatePreparationInterview,
+  getInterviewSessions,
   getRoles,
+  regeneratePreparationQuestion,
+  reportInterviewQuestion,
   runPythonCode,
+  updateInterviewSession,
   uploadText,
 } from '../api';
 import type {
@@ -14,8 +19,12 @@ import type {
   BuildInterviewPlanResponse,
   CodeRunResponse,
   InterviewContext,
+  InterviewPracticeSession,
+  InterviewPracticeSessionPayload,
   InterviewQuestion,
   LearningPathItem,
+  PreparationInterviewType,
+  PreparationLevel,
   QuestionFocus,
 } from '../types';
 import { errorMessage } from '../ui';
@@ -29,11 +38,21 @@ export function InterviewPracticePage() {
   const [questionFocus, setQuestionFocus] = useState<QuestionFocus[]>(['all']);
   const [selectedFocusSkills, setSelectedFocusSkills] = useState<Partial<Record<QuestionFocus, string[]>>>({});
   const [questionCount, setQuestionCount] = useState(10);
+  const [preparationLevel, setPreparationLevel] = useState<PreparationLevel>('intermediate');
+  const [interviewType, setInterviewType] = useState<PreparationInterviewType>('mixed');
   const [interviewContext, setInterviewContext] = useState<InterviewContext | null>(null);
   const [planResponse, setPlanResponse] = useState<BuildInterviewPlanResponse | null>(null);
+  const [practiceSessions, setPracticeSessions] = useState<InterviewPracticeSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState('');
+  const [sessionStatus, setSessionStatus] = useState<InterviewPracticeSession['status']>('in_progress');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answersByQuestion, setAnswersByQuestion] = useState<Record<string, string>>({});
   const [evaluations, setEvaluations] = useState<Record<string, AnswerEvaluation>>({});
   const [codeByQuestion, setCodeByQuestion] = useState<Record<string, string>>({});
+  const [notesByQuestion, setNotesByQuestion] = useState<Record<string, string>>({});
+  const [bookmarkedQuestionIds, setBookmarkedQuestionIds] = useState<string[]>([]);
+  const [retryCounts, setRetryCounts] = useState<Record<string, number>>({});
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [codeRunResult, setCodeRunResult] = useState<CodeRunResponse | null>(null);
   const [learningPath, setLearningPath] = useState<LearningPathItem[]>([]);
   const [loadingLabel, setLoadingLabel] = useState('');
@@ -56,13 +75,50 @@ export function InterviewPracticePage() {
 
   useEffect(() => {
     refreshRoles();
+    refreshPracticeSessions();
   }, []);
+
+  useEffect(() => {
+    if (!activeSessionId || !planResponse || sessionStatus === 'completed') {
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      persistSession(sessionStatus).catch((caughtError) => setError(errorMessage(caughtError)));
+    }, 1000);
+    return () => window.clearTimeout(timeout);
+  }, [
+    activeSessionId,
+    answersByQuestion,
+    codeByQuestion,
+    currentQuestionIndex,
+    evaluations,
+    learningPath,
+    planResponse,
+    notesByQuestion,
+    bookmarkedQuestionIds,
+    retryCounts,
+    sessionStatus,
+  ]);
+
+  useEffect(() => {
+    if (!planResponse || sessionStatus !== 'in_progress') return;
+    const interval = window.setInterval(() => setElapsedSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(interval);
+  }, [planResponse, sessionStatus]);
 
   async function refreshRoles() {
     try {
       const loadedRoles = await getRoles();
       setRoles(loadedRoles);
       setSelectedRole((currentRole) => currentRole || loadedRoles[0] || '');
+    } catch (caughtError) {
+      setError(errorMessage(caughtError));
+    }
+  }
+
+  async function refreshPracticeSessions() {
+    try {
+      setPracticeSessions(await getInterviewSessions());
     } catch (caughtError) {
       setError(errorMessage(caughtError));
     }
@@ -82,9 +138,16 @@ export function InterviewPracticePage() {
     setSelectedFocusSkills({});
     setQuestionFocus(['all']);
     setPlanResponse(null);
+    setActiveSessionId('');
+    setSessionStatus('in_progress');
+    setAnswersByQuestion({});
     setLearningPath([]);
     setEvaluations({});
     setCodeByQuestion({});
+    setNotesByQuestion({});
+    setBookmarkedQuestionIds([]);
+    setRetryCounts({});
+    setElapsedSeconds(0);
     setCodeRunResult(null);
     setLoadedSkillOptionsKey('');
     await loadSkillOptionsForRole(role);
@@ -105,7 +168,17 @@ export function InterviewPracticePage() {
       }
 
       const role = inputs.targetRole ?? interviewContextRole() ?? 'Target role';
-      const preparationResponse = await generatePreparationInterview(role, selectedSkills, questionCount);
+      const candidateProjects = Array.isArray(interviewContext?.candidate_profile.projects)
+        ? interviewContext.candidate_profile.projects as Record<string, unknown>[]
+        : [];
+      const preparationResponse = await generatePreparationInterview(
+        role,
+        selectedSkills,
+        candidateProjects,
+        questionCount,
+        preparationLevel,
+        interviewType,
+      );
       const context = interviewContext ?? {
         candidate_profile: {},
         job_profile: { role },
@@ -114,7 +187,7 @@ export function InterviewPracticePage() {
         gap_skills: [],
         skill_groups: {},
       };
-      setPlanResponse({
+      const nextPlanResponse: BuildInterviewPlanResponse = {
         context,
         interview_plan: {
           role: preparationResponse.role,
@@ -125,16 +198,31 @@ export function InterviewPracticePage() {
           interview_rounds: ['Preparation question set'],
           questions: preparationResponse.questions,
           learning_path: [],
+          preparation_level: preparationResponse.level,
+          interview_type: preparationResponse.interview_type,
         },
-      });
+      };
+      setPlanResponse(nextPlanResponse);
       setLearningPath([]);
       setEvaluations({});
+      setAnswersByQuestion({});
       setCodeByQuestion({});
+      setNotesByQuestion({});
+      setBookmarkedQuestionIds([]);
+      setRetryCounts({});
+      setElapsedSeconds(0);
       setCodeRunResult(null);
       setCurrentQuestionIndex(0);
       if (answerRef.current) {
         answerRef.current.value = '';
       }
+      const session = await createInterviewSession(
+        `${preparationResponse.role} interview practice`,
+        buildSessionPayload(nextPlanResponse, {}, {}, {}, [], 0, {}, [], {}, 0),
+      );
+      setActiveSessionId(session.id);
+      setSessionStatus(session.status);
+      await refreshPracticeSessions();
     });
   }
 
@@ -171,7 +259,7 @@ export function InterviewPracticePage() {
       return;
     }
 
-    const writtenAnswer = answerRef.current?.value.trim() ?? '';
+    const writtenAnswer = answersByQuestion[currentQuestion.id]?.trim() ?? '';
     const code = codeByQuestion[currentQuestion.id]?.trim() ?? '';
     const codingQuestion = isCodingQuestion(currentQuestion);
 
@@ -204,9 +292,6 @@ export function InterviewPracticePage() {
   function goToQuestion(index: number) {
     setCurrentQuestionIndex(index);
     setError('');
-    if (answerRef.current) {
-      answerRef.current.value = '';
-    }
     setCodeRunResult(null);
   }
 
@@ -243,6 +328,151 @@ export function InterviewPracticePage() {
       ...currentCode,
       [currentQuestion.id]: code,
     }));
+  }
+
+  function updateCurrentAnswer(answer: string) {
+    if (!currentQuestion) {
+      return;
+    }
+    setAnswersByQuestion((currentAnswers) => ({
+      ...currentAnswers,
+      [currentQuestion.id]: answer,
+    }));
+  }
+
+  function updateCurrentNote(note: string) {
+    if (!currentQuestion) return;
+    setNotesByQuestion((current) => ({ ...current, [currentQuestion.id]: note }));
+  }
+
+  function toggleCurrentBookmark() {
+    if (!currentQuestion) return;
+    setBookmarkedQuestionIds((current) =>
+      current.includes(currentQuestion.id)
+        ? current.filter((id) => id !== currentQuestion.id)
+        : [...current, currentQuestion.id],
+    );
+  }
+
+  function retryCurrentQuestion() {
+    if (!currentQuestion) return;
+    setEvaluations((current) => {
+      const next = { ...current };
+      delete next[currentQuestion.id];
+      return next;
+    });
+    setRetryCounts((current) => ({
+      ...current,
+      [currentQuestion.id]: (current[currentQuestion.id] ?? 0) + 1,
+    }));
+    setCodeRunResult(null);
+  }
+
+  async function regenerateCurrentQuestion() {
+    if (!planResponse || !currentQuestion) return;
+    await runTask('Regenerating question', async () => {
+      const candidateProjects = Array.isArray(planResponse.context.candidate_profile.projects)
+        ? planResponse.context.candidate_profile.projects as Record<string, unknown>[]
+        : [];
+      const replacement = await regeneratePreparationQuestion(
+        planResponse.interview_plan.role,
+        selectedSkillsFromFocusMap(planResponse.interview_plan.selected_focus_skills),
+        candidateProjects,
+        planResponse.interview_plan.preparation_level ?? 'intermediate',
+        planResponse.interview_plan.interview_type ?? 'mixed',
+        currentQuestion.id,
+        planResponse.interview_plan.questions,
+      );
+      setPlanResponse({
+        ...planResponse,
+        interview_plan: {
+          ...planResponse.interview_plan,
+          questions: planResponse.interview_plan.questions.map((question) =>
+            question.id === currentQuestion.id ? replacement : question
+          ),
+        },
+      });
+      retryCurrentQuestion();
+      setAnswersByQuestion((current) => ({ ...current, [currentQuestion.id]: '' }));
+      setCodeByQuestion((current) => ({ ...current, [currentQuestion.id]: '' }));
+    });
+  }
+
+  async function reportCurrentQuestion(reason: 'irrelevant' | 'poor_quality') {
+    if (!currentQuestion) return;
+    await runTask('Reporting question', async () => {
+      await reportInterviewQuestion(currentQuestion, reason);
+    });
+  }
+
+  async function pauseSession() {
+    await runTask('Saving interview session', async () => {
+      await persistSession('paused');
+      setSessionStatus('paused');
+      await refreshPracticeSessions();
+    });
+  }
+
+  async function completeSession() {
+    await runTask('Completing interview session', async () => {
+      await persistSession('completed');
+      setSessionStatus('completed');
+      await refreshPracticeSessions();
+    });
+  }
+
+  async function resumeSession(sessionId: string) {
+    const session = practiceSessions.find((item) => item.id === sessionId);
+    if (!session) {
+      return;
+    }
+    const payload = session.payload;
+    setPlanResponse(payload.plan_response);
+    setSelectedRole(payload.plan_response.interview_plan.role);
+    setInterviewContext(payload.plan_response.context);
+    setSelectedFocusSkills(payload.plan_response.interview_plan.selected_focus_skills ?? {});
+    setQuestionFocus(payload.plan_response.interview_plan.question_focus ?? ['all']);
+    setPreparationLevel(payload.plan_response.interview_plan.preparation_level ?? 'intermediate');
+    setInterviewType(payload.plan_response.interview_plan.interview_type ?? 'mixed');
+    setQuestionCount(payload.plan_response.interview_plan.questions.length);
+    setAnswersByQuestion(payload.answers_by_question ?? {});
+    setCodeByQuestion(payload.code_by_question ?? {});
+    setEvaluations(payload.evaluations ?? {});
+    setLearningPath(payload.learning_path ?? []);
+    setNotesByQuestion(payload.notes_by_question ?? {});
+    setBookmarkedQuestionIds(payload.bookmarked_question_ids ?? []);
+    setRetryCounts(payload.retry_counts ?? {});
+    setElapsedSeconds(payload.elapsed_seconds ?? 0);
+    setCurrentQuestionIndex(payload.current_question_index ?? 0);
+    setActiveSessionId(session.id);
+    setSessionStatus(session.status === 'completed' ? 'completed' : 'in_progress');
+    setCodeRunResult(null);
+    if (session.status !== 'completed') {
+      await updateInterviewSession(session.id, session.title, 'in_progress', payload);
+    }
+  }
+
+  async function persistSession(status: InterviewPracticeSession['status']) {
+    if (!activeSessionId || !planResponse) {
+      return;
+    }
+    await updateInterviewSession(
+      activeSessionId,
+      `${planResponse.interview_plan.role} interview practice`,
+      status,
+      buildSessionPayload(
+        planResponse,
+        answersByQuestion,
+        codeByQuestion,
+        evaluations,
+        learningPath,
+        currentQuestionIndex,
+        notesByQuestion,
+        bookmarkedQuestionIds,
+        retryCounts,
+        elapsedSeconds,
+      ),
+    );
   }
 
   function updateQuestionFocusFromSelections(nextSkills: Partial<Record<QuestionFocus, string[]>>) {
@@ -288,24 +518,7 @@ export function InterviewPracticePage() {
   }
 
   function isCodingQuestion(question: InterviewQuestion) {
-    const text = [
-      question.question,
-      question.skill ?? '',
-      ...question.expected_points,
-      ...question.scoring_rubric,
-    ].join(' ').toLowerCase();
-
-    return (
-      text.includes('python') &&
-      (
-        text.includes('write') ||
-        text.includes('function') ||
-        text.includes('class') ||
-        text.includes('code') ||
-        text.includes('implement') ||
-        text.includes('list comprehension')
-      )
-    );
+    return question.is_coding;
   }
 
   function interviewContextRole() {
@@ -389,24 +602,41 @@ export function InterviewPracticePage() {
   return (
     <InterviewPracticeView
       answerRef={answerRef}
+      answerValue={currentQuestion ? answersByQuestion[currentQuestion.id] ?? '' : ''}
+      answersByQuestion={answersByQuestion}
       averageScore={averageScore}
       currentEvaluation={currentEvaluation}
       currentQuestion={currentQuestion}
       currentQuestionIndex={currentQuestionIndex}
       codeRunResult={codeRunResult}
+      codeByQuestion={codeByQuestion}
       codeValue={currentQuestion ? codeByQuestion[currentQuestion.id] ?? '' : ''}
+      noteValue={currentQuestion ? notesByQuestion[currentQuestion.id] ?? '' : ''}
+      bookmarked={currentQuestion ? bookmarkedQuestionIds.includes(currentQuestion.id) : false}
+      elapsedSeconds={elapsedSeconds}
       cvTextRef={cvTextRef}
       error={error}
       evaluations={evaluations}
       learningPath={learningPath}
       loading={loading}
       loadingLabel={loadingLabel}
+      activeSessionId={activeSessionId}
+      sessionStatus={sessionStatus}
+      practiceSessions={practiceSessions}
       onCvBlur={handleCvBlur}
       onEvaluateAnswer={evaluateCurrentAnswer}
       onGeneratePlan={generatePlan}
+      onRegenerateQuestion={regenerateCurrentQuestion}
+      onReportQuestion={reportCurrentQuestion}
+      onRetryQuestion={retryCurrentQuestion}
+      onToggleBookmark={toggleCurrentBookmark}
       onNextQuestion={goToNextQuestion}
+      onPauseSession={pauseSession}
+      onCompleteSession={completeSession}
       onPreviousQuestion={goToPreviousQuestion}
       onQuestionCountChange={setQuestionCount}
+      onPreparationLevelChange={setPreparationLevel}
+      onInterviewTypeChange={setInterviewType}
       onQuestionSelect={goToQuestion}
       onQuestionFocusClear={clearQuestionFocus}
       onRefreshRoles={refreshRoles}
@@ -414,11 +644,16 @@ export function InterviewPracticePage() {
       onSelectedFocusSkillsChange={updateSelectedFocusSkills}
       onSelectedFocusSkillToggle={toggleSelectedFocusSkill}
       onSelectedRoleChange={handleSelectedRoleChange}
+      onResumeSession={resumeSession}
+      onUpdateAnswer={updateCurrentAnswer}
       onUpdateCode={updateCurrentCode}
+      onUpdateNote={updateCurrentNote}
       onUploadCv={uploadCv}
       plan={planResponse?.interview_plan ?? null}
       questionFocus={questionFocus}
       questionCount={questionCount}
+      preparationLevel={preparationLevel}
+      interviewType={interviewType}
       roles={roles}
       selectedRole={selectedRole}
       selectedFocusSkills={selectedFocusSkills}
@@ -426,4 +661,30 @@ export function InterviewPracticePage() {
       skillGroups={interviewContext?.skill_groups ?? planResponse?.context.skill_groups ?? {}}
     />
   );
+}
+
+function buildSessionPayload(
+  planResponse: BuildInterviewPlanResponse,
+  answersByQuestion: Record<string, string>,
+  codeByQuestion: Record<string, string>,
+  evaluations: Record<string, AnswerEvaluation>,
+  learningPath: LearningPathItem[],
+  currentQuestionIndex: number,
+  notesByQuestion: Record<string, string>,
+  bookmarkedQuestionIds: string[],
+  retryCounts: Record<string, number>,
+  elapsedSeconds: number,
+): InterviewPracticeSessionPayload {
+  return {
+    plan_response: planResponse,
+    answers_by_question: answersByQuestion,
+    code_by_question: codeByQuestion,
+    evaluations,
+    learning_path: learningPath,
+    current_question_index: currentQuestionIndex,
+    notes_by_question: notesByQuestion,
+    bookmarked_question_ids: bookmarkedQuestionIds,
+    retry_counts: retryCounts,
+    elapsed_seconds: elapsedSeconds,
+  };
 }

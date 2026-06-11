@@ -5,9 +5,17 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-QuestionType = Literal["technical", "behavioral", "project", "gap", "role_fit"]
+QuestionType = Literal["technical", "coding", "behavioral", "project", "gap", "role_fit"]
 Difficulty = Literal["easy", "medium", "hard"]
 InterviewEngine = Literal["mistral"]
+PreparationLevel = Literal["beginner", "intermediate", "advanced"]
+PreparationInterviewType = Literal[
+    "technical_theory",
+    "coding",
+    "project",
+    "behavioral",
+    "mixed",
+]
 QuestionFocus = Literal[
     "all",
     "matched_strongly_required",
@@ -39,9 +47,13 @@ class InterviewQuestion(BaseModel):
     difficulty: Difficulty = "medium"
     skill: str | None = None
     source_group: str | None = None
+    is_coding: bool = False
+    criteria_source: Literal["llm", "template"] = "llm"
     expected_points: list[str] = Field(default_factory=list)
+    expected_point_weights: list[float] = Field(default_factory=list)
     follow_up_questions: list[str] = Field(default_factory=list)
     scoring_rubric: list[str] = Field(default_factory=list)
+    hint: str = ""
 
 
 class InterviewPlan(BaseModel):
@@ -68,6 +80,27 @@ class EvaluateAnswerRequest(BaseModel):
     interview_engine: InterviewEngine = "mistral"
 
 
+class ExpectedPointAssessment(BaseModel):
+    point: str
+    weight: float = Field(ge=0)
+    awarded_score: float = Field(ge=0)
+    explanation: str
+
+
+class ScoreBreakdownItem(BaseModel):
+    category: Literal[
+        "technical_correctness",
+        "completeness",
+        "communication",
+        "examples",
+        "code_quality",
+    ]
+    label: str
+    max_score: float = Field(ge=0)
+    awarded_score: float = Field(ge=0)
+    explanation: str
+
+
 class AnswerEvaluation(BaseModel):
     score: float
     rating: str
@@ -78,6 +111,8 @@ class AnswerEvaluation(BaseModel):
     improved_answer_outline: list[str] = Field(default_factory=list)
     follow_up_question: str | None = None
     learning_recommendations: list[str] = Field(default_factory=list)
+    expected_point_assessments: list[ExpectedPointAssessment] = Field(default_factory=list)
+    score_breakdown: list[ScoreBreakdownItem] = Field(default_factory=list)
 
 
 class LearningPathRequest(BaseModel):
@@ -88,14 +123,34 @@ class LearningPathRequest(BaseModel):
 class PreparationInterviewRequest(BaseModel):
     role: str
     selected_skills: list[str]
-    question_count: int = 5
-    level: str = "intermediate"
+    candidate_projects: list[dict[str, Any]] = Field(default_factory=list)
+    question_count: int = Field(default=5, ge=1, le=20)
+    level: PreparationLevel = "intermediate"
+    interview_type: PreparationInterviewType = "mixed"
 
 
 class PreparationInterviewResponse(BaseModel):
     role: str
     selected_skills: list[str]
+    level: PreparationLevel
+    interview_type: PreparationInterviewType
     questions: list[InterviewQuestion]
+
+
+class RegeneratePreparationQuestionRequest(BaseModel):
+    role: str
+    selected_skills: list[str]
+    candidate_projects: list[dict[str, Any]] = Field(default_factory=list)
+    level: PreparationLevel = "intermediate"
+    interview_type: PreparationInterviewType = "mixed"
+    question_id: str
+    existing_questions: list[InterviewQuestion]
+
+
+class QuestionQualityReportRequest(BaseModel):
+    question: InterviewQuestion
+    reason: Literal["irrelevant", "incorrect", "duplicate", "poor_quality", "other"]
+    comment: str = Field(default="", max_length=1000)
 
 
 class AdaptiveInterviewStartRequest(BaseModel):

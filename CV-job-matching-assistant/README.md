@@ -138,16 +138,15 @@ without python -m then your library is not inside venv of your current working d
 
 The current primary application uses the FastAPI backend and React frontend. Run them in two separate terminals.
 
-Before starting, add the Mistral API key to `CV-job-matching-assistant/.env`:
+Create `CV-job-matching-assistant/.env`. The initial admin password is used only when
+the users database is empty:
 
 ```env
 MISTRAL_API_KEY=your_mistral_api_key
-
-# Change these prototype login credentials before sharing the application.
-APP_ADMIN_USERNAME=admin
-APP_ADMIN_PASSWORD=admin123
-APP_USER_USERNAME=user
-APP_USER_PASSWORD=user123
+APP_ENV=development
+JWT_SECRET=replace-with-at-least-32-random-characters
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=replace-with-a-password-of-at-least-12-characters
 ```
 
 ## Terminal 1: FastAPI backend
@@ -184,12 +183,28 @@ Expected response:
 
 The React application requires login:
 
-- Admins can run matching and interview practice, edit default score weights and aliases, and view their saved sessions.
+- Admins can create user/admin accounts, run matching and interview practice, edit default score weights and aliases, and view their saved sessions.
 - Regular users can run matching and interview practice and view only their own saved sessions.
-- Matching and interview-preparation sessions are saved locally in `data/user_sessions.json`.
+- Users and matching/interview sessions are saved in the SQLite database at `data/app.db` by default.
 - Admin settings are saved locally in `data/app_settings.json`; skill aliases update `data/taxonomies/skill_categories.json`.
 
-This is lightweight prototype authentication. Tokens are stored in memory and expire whenever the backend restarts. Use a database, password hashing, and a production identity provider before deployment.
+Authentication uses PBKDF2 password hashes and signed, expiring JWT sessions stored
+in HttpOnly cookies. Tokens are never exposed to React or browser local storage.
+Users can rotate their password from the Account page; doing so invalidates existing
+sessions.
+
+Create additional users from the `CV-job-matching-assistant` directory:
+
+```bash
+python -m backend.app.create_user new-user
+python -m backend.app.create_user another-admin --role admin
+```
+
+Reset a password locally:
+
+```bash
+python -m backend.app.reset_password admin
+```
 
 FastAPI documentation is available at:
 
@@ -220,6 +235,64 @@ To use a backend running on a different port:
 ```bash
 VITE_API_BASE_URL=http://127.0.0.1:8010 npm run dev
 ```
+
+---
+
+# Production Deployment
+
+The provided Docker Compose setup serves React through Nginx and proxies `/api` to
+FastAPI on the same origin. Application data is persisted in the
+`hire-ready-data` Docker volume.
+
+1. Create the production environment:
+
+```bash
+cp .env.example .env
+openssl rand -hex 32
+```
+
+Put the generated value in `JWT_SECRET`, then set a strong
+`INITIAL_ADMIN_PASSWORD`, your Mistral key, deployed domain, CORS origin, and
+allowed hosts.
+
+2. Build and start:
+
+```bash
+docker compose up --build -d
+```
+
+3. Open:
+
+```text
+http://localhost:8080
+```
+
+4. After the first successful startup, remove `INITIAL_ADMIN_PASSWORD` from the
+deployment environment. The admin account remains in SQLite.
+
+Create additional deployed users with:
+
+```bash
+docker compose exec backend python -m backend.app.create_user new-user
+docker compose exec backend python -m backend.app.create_user another-admin --role admin
+```
+
+For public deployment, terminate TLS at a cloud load balancer or reverse proxy
+and keep `COOKIE_SECURE=true`. Back up the Docker data volume regularly.
+
+The included SQLite setup is intended for a single backend instance. Before
+horizontal scaling to multiple backend replicas, move users and sessions to a
+managed PostgreSQL database and use a shared rate limiter such as Redis.
+
+Production defaults intentionally disable:
+
+- FastAPI `/docs`
+- Live Python code execution
+
+Live code execution must run in a separate locked-down sandbox service before
+enabling `CODE_EXECUTION_ENABLED=true` on a public deployment.
+
+Important production variables are documented in [.env.example](.env.example).
 
 ## Restart after code changes
 
@@ -266,6 +339,9 @@ The current MVP supports:
 - Match percentage calculation
 - Missing skill analysis
 - Alternative role recommendations
+- Deterministic structured project extraction from CV project sections
+- Reviewed expected-point templates for common Python interview topics
+- Downloadable interview question sets with guidance hidden until scoring by default
 
 ---
 
@@ -363,3 +439,48 @@ Switzerland 🇨🇭
 # 📄 License
 
 This project is for educational and research purposes.
+
+# INFO
+
+## Use development when running locally without HTTPS.
+## Change to production when deploying.
+APP_ENV=development
+
+## Signs login sessions. Keep secret and never change casually.
+JWT_SECRET=your-generated-secret by running `openssl rand -hex 32`
+
+JWT_ISSUER=hire-ready-ai
+
+## Login session expires after 60 minutes.
+ACCESS_TOKEN_MINUTES=60
+
+AUTH_COOKIE_NAME=hire_ready_session
+
+## Use false locally because localhost normally uses HTTP.
+## Use true when deployed with HTTPS.
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
+
+## Creates the first admin only when data/app.db is empty.
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=ChooseYourStrongPassword123!
+
+
+Important:
+
+Replace INITIAL_ADMIN_PASSWORD=replace-with-a-strong-password.
+Your password must contain at least 12 characters.
+Remove INITIAL_ADMIN_PASSWORD after the first successful startup.
+Do not upload .env to GitHub.
+
+For Docker production deployment, use:
+
+env
+
+APP_ENV=production
+COOKIE_SECURE=true
+DATABASE_PATH=/app/data/app.db
+CORS_ALLOWED_ORIGINS=https://your-domain.com
+ALLOWED_HOSTS=your-domain.com,localhost,127.0.0.1
+API_DOCS_ENABLED=false
+CODE_EXECUTION_ENABLED=false

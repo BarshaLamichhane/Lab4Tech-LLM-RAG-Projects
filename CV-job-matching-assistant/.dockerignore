@@ -1,0 +1,13 @@
+.git
+.env
+venv
+.venv
+__pycache__
+*.pyc
+*.log
+*.pid
+frontend/angular-frontend
+frontend/streamlit-ui
+frontend/react-frontend/node_modules
+frontend/react-frontend/dist
+data/app.db

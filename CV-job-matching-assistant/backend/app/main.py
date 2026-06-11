@@ -1,20 +1,49 @@
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from backend.app.schemas import (
     AppSettings,
+    ChangePasswordRequest,
+    CreateUserRequest,
     ExtractJobSkillsRequest,
     ExtractJobSkillsResponse,
+    InterviewSessionRequest,
+    InterviewSessionResponse,
     LoginRequest,
     LoginResponse,
     MatchNewJobRequest,
     MatchResponse,
     MatchSavedJobRequest,
+    UserResponse,
 )
-from backend.app.auth import CurrentUser, login, require_user
-from backend.app.session_store import load_user_sessions, save_user_session
+from backend.app.auth import (
+    CurrentUser,
+    authenticate,
+    change_password,
+    create_user,
+    create_access_token,
+    initialize_auth_database,
+    require_user,
+)
+from backend.app.config import CONFIG
+from backend.app.evaluation_audit_store import (
+    initialize_evaluation_audit_database,
+    save_evaluation_audit,
+)
+from backend.app.session_store import (
+    initialize_session_database,
+    load_interview_session,
+    load_interview_sessions,
+    load_user_sessions,
+    save_interview_session,
+    save_user_session,
+)
 from backend.app.settings_store import load_app_settings, save_app_settings
 from backend.app.services import (
     build_new_job_match,
@@ -31,9 +60,14 @@ from backend.interview.code_runner import run_python_code
 from backend.interview.interview_assistant import (
     build_interview_context,
     build_learning_path,
-    evaluate_answer,
+    evaluate_answer_with_audit,
 )
-from backend.interview.preparation_interview import generate_preparation_interview
+from backend.interview.preparation_interview import (
+    generate_preparation_interview,
+    regenerate_preparation_question,
+)
+from backend.interview.progress_dashboard import build_progress_dashboard
+from backend.job_description.job_description_cleaner_mistral_api import MISTRAL_API_MODEL_NAME
 from backend.interview.schemas import (
     AdaptiveInterviewAnswerRequest,
     AdaptiveInterviewResponse,
@@ -44,28 +78,53 @@ from backend.interview.schemas import (
     CodeRunResponse,
     EvaluateAnswerRequest,
     InterviewContext,
+    InterviewQuestion,
     LearningPathRequest,
     PreparationInterviewRequest,
     PreparationInterviewResponse,
+    QuestionQualityReportRequest,
+    RegeneratePreparationQuestionRequest,
 )
 from backend.cv.cv_skill_extractor import load_skill_categories as load_cv_skill_categories
 from backend.matching.skill_matching_engine import load_skill_categories as load_matching_skill_categories
 
 
-app = FastAPI(title="CV Job Matching Assistant API")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    initialize_auth_database()
+    initialize_session_database()
+    initialize_evaluation_audit_database()
+    yield
+
+
+app = FastAPI(
+    title="CV Job Matching Assistant API",
+    docs_url="/docs" if CONFIG.api_docs_enabled else None,
+    redoc_url="/redoc" if CONFIG.api_docs_enabled else None,
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200",
-        "http://127.0.0.1:4200",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=CONFIG.cors_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=CONFIG.allowed_hosts)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.middleware("http")
+async def reject_cross_origin_cookie_writes(request: Request, call_next):
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        origin = request.headers.get("origin")
+        uses_cookie = CONFIG.auth_cookie_name in request.cookies
+        same_origin = str(request.base_url).rstrip("/")
+        trusted_origins = {*CONFIG.cors_allowed_origins, same_origin}
+        if uses_cookie and origin and origin not in trusted_origins:
+            return Response(status_code=403, content="Cross-origin request rejected")
+    return await call_next(request)
 
 
 @app.get("/health")
@@ -74,14 +133,55 @@ def health() -> dict[str, str]:
 
 
 @app.post("/api/auth/login", response_model=LoginResponse)
-def login_route(request: LoginRequest) -> LoginResponse:
-    token, user = login(request.username, request.password)
-    return LoginResponse(token=token, username=user.username, role=user.role)
+def login_route(request: LoginRequest, response: Response, http_request: Request) -> LoginResponse:
+    client_host = http_request.client.host if http_request.client else "unknown"
+    user = authenticate(request.username, request.password, f"{client_host}:{request.username.lower()}")
+    response.set_cookie(
+        key=CONFIG.auth_cookie_name,
+        value=create_access_token(user),
+        httponly=True,
+        secure=CONFIG.cookie_secure,
+        samesite=CONFIG.cookie_samesite,
+        max_age=CONFIG.access_token_minutes * 60,
+        path="/",
+    )
+    return LoginResponse(username=user.username, role=user.role)
+
+
+@app.post("/api/auth/logout", status_code=204)
+def logout_route() -> Response:
+    response = Response(status_code=204)
+    response.delete_cookie(
+        key=CONFIG.auth_cookie_name,
+        secure=CONFIG.cookie_secure,
+        samesite=CONFIG.cookie_samesite,
+        path="/",
+    )
+    return response
 
 
 @app.get("/api/auth/me")
 def current_user_route(user: CurrentUser = Depends(require_user)) -> dict[str, str]:
     return {"username": user.username, "role": user.role}
+
+
+@app.post("/api/auth/change-password", status_code=204)
+def change_password_route(
+    request: ChangePasswordRequest,
+    user: CurrentUser = Depends(require_user),
+) -> Response:
+    try:
+        change_password(user, request.current_password, request.new_password)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    response = Response(status_code=204)
+    response.delete_cookie(
+        key=CONFIG.auth_cookie_name,
+        secure=CONFIG.cookie_secure,
+        samesite=CONFIG.cookie_samesite,
+        path="/",
+    )
+    return response
 
 
 @app.get("/api/admin/settings", response_model=AppSettings)
@@ -102,9 +202,73 @@ def update_admin_settings(
     return saved
 
 
+@app.post("/api/admin/users", response_model=UserResponse, status_code=201)
+def create_admin_user(
+    request: CreateUserRequest,
+    user: CurrentUser = Depends(require_user),
+) -> CurrentUser:
+    _ensure_admin(user)
+    try:
+        return create_user(request.username, request.password, request.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.get("/api/sessions")
 def get_user_sessions(user: CurrentUser = Depends(require_user)) -> list[dict]:
     return load_user_sessions(user.username)
+
+
+@app.get("/api/interview/sessions", response_model=list[InterviewSessionResponse])
+def get_interview_sessions(user: CurrentUser = Depends(require_user)) -> list[dict]:
+    return load_interview_sessions(user.username)
+
+
+@app.get("/api/interview/progress")
+def get_interview_progress(user: CurrentUser = Depends(require_user)) -> dict:
+    return build_progress_dashboard(load_interview_sessions(user.username))
+
+
+@app.get("/api/interview/sessions/{session_id}", response_model=InterviewSessionResponse)
+def get_interview_session(
+    session_id: str,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        return load_interview_session(user.username, session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/sessions", response_model=InterviewSessionResponse, status_code=201)
+def create_interview_session(
+    request: InterviewSessionRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    return save_interview_session(
+        username=user.username,
+        title=request.title,
+        payload=request.payload,
+        status=request.status,
+    )
+
+
+@app.put("/api/interview/sessions/{session_id}", response_model=InterviewSessionResponse)
+def update_interview_session(
+    session_id: str,
+    request: InterviewSessionRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        return save_interview_session(
+            username=user.username,
+            title=request.title,
+            payload=request.payload,
+            status=request.status,
+            session_id=session_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/api/job-roles")
@@ -232,12 +396,21 @@ def evaluate_interview_answer(
     user: CurrentUser = Depends(require_user),
 ) -> AnswerEvaluation:
     try:
-        return evaluate_answer(
+        evaluation, prompt, raw_response = evaluate_answer_with_audit(
             question=request.question,
             answer=request.answer,
             context=request.context,
             interview_engine="mistral",
         )
+        save_evaluation_audit(
+            username=user.username,
+            question_id=request.question.id,
+            model=MISTRAL_API_MODEL_NAME,
+            prompt=prompt,
+            raw_response=raw_response,
+            evaluation=evaluation.model_dump(),
+        )
+        return evaluation
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -265,18 +438,49 @@ def create_preparation_interview(
         result = generate_preparation_interview(
             role=request.role,
             selected_skills=request.selected_skills,
+            candidate_projects=request.candidate_projects,
             question_count=request.question_count,
             level=request.level,
-        )
-        save_user_session(
-            user.username,
-            "interview_preparation",
-            request.role,
-            result.model_dump(),
+            interview_type=request.interview_type,
         )
         return result
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/preparation/regenerate", response_model=InterviewQuestion)
+def regenerate_preparation_question_route(
+    request: RegeneratePreparationQuestionRequest,
+    user: CurrentUser = Depends(require_user),
+) -> InterviewQuestion:
+    try:
+        return regenerate_preparation_question(
+            role=request.role,
+            selected_skills=request.selected_skills,
+            candidate_projects=request.candidate_projects,
+            level=request.level,
+            interview_type=request.interview_type,
+            question_id=request.question_id,
+            existing_questions=[
+                question for question in request.existing_questions if question.id != request.question_id
+            ],
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/questions/report", status_code=201)
+def report_interview_question(
+    request: QuestionQualityReportRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict[str, str]:
+    report = save_user_session(
+        user.username,
+        "question_quality_report",
+        request.question.question[:120],
+        request.model_dump(),
+    )
+    return {"id": report["id"], "status": "reported"}
 
 
 @app.post("/api/interview/adaptive/start", response_model=AdaptiveInterviewResponse)
@@ -306,6 +510,8 @@ def run_interview_code(
     request: CodeRunRequest,
     user: CurrentUser = Depends(require_user),
 ) -> CodeRunResponse:
+    if not CONFIG.code_execution_enabled:
+        raise HTTPException(status_code=503, detail="Live code execution is disabled")
     try:
         return run_python_code(request)
     except Exception as exc:

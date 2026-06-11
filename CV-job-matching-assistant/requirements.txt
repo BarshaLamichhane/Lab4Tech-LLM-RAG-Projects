@@ -17,3 +17,4 @@ mistralai
 fastapi
 uvicorn[standard]
 python-multipart
+PyJWT

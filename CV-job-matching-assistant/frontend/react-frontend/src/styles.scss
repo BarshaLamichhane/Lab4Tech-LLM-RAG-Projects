@@ -541,6 +541,10 @@ h3 {
   place-items: center;
 }
 
+.account-shell {
+  min-height: auto;
+}
+
 .auth-panel {
   max-width: 440px;
   width: 100%;
@@ -1166,6 +1170,21 @@ select:focus {
   max-width: 1380px;
 }
 
+.interview-config-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.interview-config-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
+.interview-config-grid .field-label {
+  margin-top: 0;
+}
+
 .question-list {
   align-self: start;
 }
@@ -1195,6 +1214,272 @@ select:focus {
   font-size: 1.18rem;
   font-weight: 700;
   line-height: 1.45;
+}
+
+.question-tools,
+.question-quality-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.question-quality-actions {
+  margin-bottom: 12px;
+}
+
+.question-quality-actions button {
+  background: transparent;
+  border: 0;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 0;
+}
+
+.hint-callout {
+  background: #eff6ff;
+  border-left: 3px solid var(--accent);
+  color: var(--text);
+  margin: 10px 0 16px;
+  padding: 10px 12px;
+}
+
+.question-notes {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.question-notes span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.practice-setup-actions,
+.guidance-control {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.resume-session-grid,
+.report-summary,
+.report-question-list {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-session-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.resume-session {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  text-align: left;
+}
+
+.resume-session:hover {
+  border-color: var(--accent);
+}
+
+.resume-session span,
+.resume-session small,
+.report-summary span,
+.report-question-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.report-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+.report-summary div,
+.report-question-list article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.report-summary div {
+  display: grid;
+  gap: 5px;
+}
+
+.report-summary strong {
+  color: var(--accent-strong);
+  font-size: 1.25rem;
+}
+
+.report-question-list article {
+  display: grid;
+  gap: 6px;
+}
+
+.report-question-list h3,
+.report-question-list p {
+  margin: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.dashboard-bars,
+.topic-rank-list,
+.trend-list,
+.retry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-bars div {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 1fr auto;
+}
+
+.dashboard-bars progress {
+  accent-color: var(--accent);
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.topic-rank-list div,
+.trend-list div {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 9px 0;
+}
+
+.topic-rank-list span,
+.trend-list span,
+.retry-list span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.retry-list article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.retry-list p {
+  margin: 6px 0 0;
+}
+
+.next-session {
+  align-content: start;
+}
+
+.guidance-control {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 16px 0;
+  padding: 12px;
+}
+
+.guidance-control div {
+  display: grid;
+  gap: 2px;
+}
+
+.guidance-control span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.guidance-control .ghost-button {
+  min-height: 34px;
+}
+
+.guidance-content {
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.guidance-content li {
+  padding-right: 54px;
+  position: relative;
+}
+
+.point-weight {
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.score-breakdown-grid,
+.point-assessment-list {
+  display: grid;
+  gap: 12px;
+}
+
+.score-breakdown-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin-bottom: 20px;
+}
+
+.score-breakdown-grid article,
+.point-assessment-list article {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.score-breakdown-grid article div,
+.point-assessment-list article div {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.score-breakdown-grid span,
+.point-assessment-list span {
+  color: var(--accent-strong);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.score-breakdown-grid progress {
+  accent-color: var(--accent);
+  margin-top: 10px;
+  width: 100%;
+}
+
+.score-breakdown-grid p,
+.point-assessment-list p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 8px 0 0;
 }
 
 .skill-pill,
@@ -1232,6 +1517,42 @@ select:focus {
   font-size: 0.78rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.candidate-project-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.candidate-project {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.candidate-project .panel-heading {
+  margin-bottom: 8px;
+}
+
+.candidate-project .panel-heading h3 {
+  color: var(--text);
+  font-size: 1rem;
+  margin: 0;
+  text-transform: none;
+}
+
+.candidate-project .panel-heading a {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.project-detail-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
 }
 
 .empty {
@@ -1283,6 +1604,7 @@ pre {
   .home-grid,
   .input-grid,
   .detail-grid,
+  .dashboard-grid,
   .result-grid,
   .chart-grid,
   .settings-grid,
@@ -1309,6 +1631,18 @@ pre {
 
   .lists {
     grid-template-columns: 1fr;
+  }
+
+  .project-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-config-grid label:last-child {
+    grid-column: auto;
   }
 
   .settings-wide {

@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import UploadFile
 
+from backend.app.config import CONFIG
 from backend.cv.cv_parser import extract_text_from_pdf
 from backend.cv.cv_skill_extractor import extract_candidate_skill_profile
 from backend.job_description.job_description_cleaner_mistral_api import (
@@ -31,6 +32,8 @@ async def read_uploaded_text(uploaded_file: UploadFile | None) -> str:
         return ""
 
     file_bytes = await uploaded_file.read()
+    if len(file_bytes) > CONFIG.max_upload_bytes:
+        raise ValueError(f"Upload exceeds the {CONFIG.max_upload_bytes // (1024 * 1024)} MB limit")
     filename = uploaded_file.filename or ""
 
     if uploaded_file.content_type == "application/pdf" or filename.lower().endswith(".pdf"):

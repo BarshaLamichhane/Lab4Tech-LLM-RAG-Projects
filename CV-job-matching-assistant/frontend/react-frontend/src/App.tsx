@@ -38,10 +38,13 @@ export function App() {
             <button type="button">Interview Assistant</button>
             <div className="nav-dropdown">
               <NavLink to="/interview-practice">Preparation mode</NavLink>
+              <NavLink to="/interview-progress">Progress dashboard</NavLink>
               <span className="nav-disabled">Adaptive interview</span>
             </div>
           </div>
           <NavLink to="/sessions">Sessions</NavLink>
+          <NavLink to="/account">Account</NavLink>
+          {user.role === 'admin' && <NavLink to="/admin/users">Users</NavLink>}
           {user.role === 'admin' && <NavLink to="/admin/settings">Settings</NavLink>}
           <span className="user-badge">{user.username} · {user.role}</span>
           <button className="nav-logout" type="button" onClick={logout}>Sign out</button>
