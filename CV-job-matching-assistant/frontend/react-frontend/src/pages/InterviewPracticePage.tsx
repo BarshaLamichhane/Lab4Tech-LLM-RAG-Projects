@@ -6,12 +6,16 @@ import {
   createInterviewSession,
   evaluateInterviewAnswer,
   generatePreparationInterview,
+  getGroundingSources,
   getInterviewSessions,
   getRoles,
+  buildGroundingIndex,
   regeneratePreparationQuestion,
   reportInterviewQuestion,
   runPythonCode,
   updateInterviewSession,
+  uploadGroundingDocuments,
+  uploadGroundingUrl,
   uploadText,
 } from '../api';
 import type {
@@ -22,10 +26,13 @@ import type {
   InterviewPracticeSession,
   InterviewPracticeSessionPayload,
   InterviewQuestion,
+  GroundingIndexMode,
+  GroundingSource,
   LearningPathItem,
   PreparationInterviewType,
   PreparationLevel,
   QuestionFocus,
+  QuestionGenerationStrategy,
 } from '../types';
 import { errorMessage } from '../ui';
 import { InterviewPracticeView } from './InterviewPracticeView';
@@ -40,6 +47,11 @@ export function InterviewPracticePage() {
   const [questionCount, setQuestionCount] = useState(10);
   const [preparationLevel, setPreparationLevel] = useState<PreparationLevel>('intermediate');
   const [interviewType, setInterviewType] = useState<PreparationInterviewType>('mixed');
+  const [generationStrategy, setGenerationStrategy] = useState<QuestionGenerationStrategy>('llm');
+  const [groundingIndexMode, setGroundingIndexMode] = useState<GroundingIndexMode>('use_existing');
+  const [groundingQuery, setGroundingQuery] = useState('');
+  const [groundingSources, setGroundingSources] = useState<GroundingSource[]>([]);
+  const [useCompanyContext, setUseCompanyContext] = useState(false);
   const [interviewContext, setInterviewContext] = useState<InterviewContext | null>(null);
   const [planResponse, setPlanResponse] = useState<BuildInterviewPlanResponse | null>(null);
   const [practiceSessions, setPracticeSessions] = useState<InterviewPracticeSession[]>([]);
@@ -76,6 +88,7 @@ export function InterviewPracticePage() {
   useEffect(() => {
     refreshRoles();
     refreshPracticeSessions();
+    refreshGroundingSources();
   }, []);
 
   useEffect(() => {
@@ -124,6 +137,14 @@ export function InterviewPracticePage() {
     }
   }
 
+  async function refreshGroundingSources() {
+    try {
+      setGroundingSources(await getGroundingSources());
+    } catch (caughtError) {
+      setError(errorMessage(caughtError));
+    }
+  }
+
   async function uploadCv(event: ChangeEvent<HTMLInputElement>) {
     await uploadFileText(event);
   }
@@ -150,6 +171,7 @@ export function InterviewPracticePage() {
     setElapsedSeconds(0);
     setCodeRunResult(null);
     setLoadedSkillOptionsKey('');
+    setUseCompanyContext(false);
     await loadSkillOptionsForRole(role);
   }
 
@@ -162,8 +184,8 @@ export function InterviewPracticePage() {
     await runTask('Generating interview plan', async () => {
       const resolvedQuestionFocus = questionFocusFromSelectedSkills(selectedFocusSkills);
       const selectedSkills = selectedSkillsFromFocusMap(selectedFocusSkills);
-      if (!selectedSkills.length) {
-        setError('Select at least one skill before generating preparation questions.');
+      if (selectedSkills.length !== 1) {
+        setError('Select exactly one skill before generating focused preparation questions.');
         return;
       }
 
@@ -178,6 +200,11 @@ export function InterviewPracticePage() {
         questionCount,
         preparationLevel,
         interviewType,
+        generationStrategy,
+        groundingQuery,
+        groundingIndexMode,
+        useCompanyContext,
+        companyContextFromProfile(interviewContext?.job_profile),
       );
       const context = interviewContext ?? {
         candidate_profile: {},
@@ -200,6 +227,8 @@ export function InterviewPracticePage() {
           learning_path: [],
           preparation_level: preparationResponse.level,
           interview_type: preparationResponse.interview_type,
+          use_company_context: useCompanyContext,
+          company_context: companyContextFromProfile(context.job_profile),
         },
       };
       setPlanResponse(nextPlanResponse);
@@ -382,6 +411,8 @@ export function InterviewPracticePage() {
         planResponse.interview_plan.interview_type ?? 'mixed',
         currentQuestion.id,
         planResponse.interview_plan.questions,
+        planResponse.interview_plan.use_company_context ?? false,
+        planResponse.interview_plan.company_context,
       );
       setPlanResponse({
         ...planResponse,
@@ -430,10 +461,14 @@ export function InterviewPracticePage() {
     setPlanResponse(payload.plan_response);
     setSelectedRole(payload.plan_response.interview_plan.role);
     setInterviewContext(payload.plan_response.context);
-    setSelectedFocusSkills(payload.plan_response.interview_plan.selected_focus_skills ?? {});
-    setQuestionFocus(payload.plan_response.interview_plan.question_focus ?? ['all']);
+    const resumedSelection = singleFocusSelection(
+      payload.plan_response.interview_plan.selected_focus_skills ?? {},
+    );
+    setSelectedFocusSkills(resumedSelection);
+    setQuestionFocus(questionFocusFromSelectedSkills(resumedSelection));
     setPreparationLevel(payload.plan_response.interview_plan.preparation_level ?? 'intermediate');
     setInterviewType(payload.plan_response.interview_plan.interview_type ?? 'mixed');
+    setUseCompanyContext(payload.plan_response.interview_plan.use_company_context ?? false);
     setQuestionCount(payload.plan_response.interview_plan.questions.length);
     setAnswersByQuestion(payload.answers_by_question ?? {});
     setCodeByQuestion(payload.code_by_question ?? {});
@@ -530,13 +565,8 @@ export function InterviewPracticePage() {
     if (focus === 'all') {
       return;
     }
-    setSelectedFocusSkills((currentSkills) => {
-      const nextSkills = { ...currentSkills };
-      if (skills.length) {
-        nextSkills[focus] = skills;
-      } else {
-        delete nextSkills[focus];
-      }
+    setSelectedFocusSkills(() => {
+      const nextSkills = skills.length ? { [focus]: [skills[0]] } : {};
       updateQuestionFocusFromSelections(nextSkills);
       return nextSkills;
     });
@@ -547,10 +577,7 @@ export function InterviewPracticePage() {
       return;
     }
 
-    const currentSkills = selectedFocusSkills[focus] ?? [];
-    const nextSkills = currentSkills.includes(skill)
-      ? currentSkills.filter((currentSkill) => currentSkill !== skill)
-      : [...currentSkills, skill];
+    const nextSkills = selectedFocusSkills[focus]?.includes(skill) ? [] : [skill];
     updateSelectedFocusSkills(focus, nextSkills);
   }
 
@@ -585,6 +612,29 @@ export function InterviewPracticePage() {
       }
     });
     await loadSkillOptionsForRole(selectedRole);
+  }
+
+  async function uploadGroundingFiles(event: ChangeEvent<HTMLInputElement>) {
+    if (!event.target.files?.length) return;
+    await runTask('Uploading grounding material', async () => {
+      setGroundingSources(await uploadGroundingDocuments(event.target.files!));
+      setGroundingIndexMode('update');
+    });
+  }
+
+  async function addGroundingUrl(url: string) {
+    await runTask('Adding online grounding material', async () => {
+      const result = await uploadGroundingUrl(url);
+      setGroundingSources(result.sources);
+      setGroundingIndexMode('update');
+    });
+  }
+
+  async function prepareGroundingIndex() {
+    await runTask('Preparing grounding index', async () => {
+      const result = await buildGroundingIndex(groundingIndexMode);
+      setGroundingSources(result.sources);
+    });
   }
 
   async function runTask(label: string, task: () => Promise<void>) {
@@ -626,6 +676,13 @@ export function InterviewPracticePage() {
       onCvBlur={handleCvBlur}
       onEvaluateAnswer={evaluateCurrentAnswer}
       onGeneratePlan={generatePlan}
+      onAddGroundingUrl={addGroundingUrl}
+      onBuildGroundingIndex={prepareGroundingIndex}
+      onGenerationStrategyChange={setGenerationStrategy}
+      onGroundingIndexModeChange={setGroundingIndexMode}
+      onGroundingQueryChange={setGroundingQuery}
+      onUseCompanyContextChange={setUseCompanyContext}
+      onUploadGrounding={uploadGroundingFiles}
       onRegenerateQuestion={regenerateCurrentQuestion}
       onReportQuestion={reportCurrentQuestion}
       onRetryQuestion={retryCurrentQuestion}
@@ -641,7 +698,6 @@ export function InterviewPracticePage() {
       onQuestionFocusClear={clearQuestionFocus}
       onRefreshRoles={refreshRoles}
       onRunCode={runCurrentCode}
-      onSelectedFocusSkillsChange={updateSelectedFocusSkills}
       onSelectedFocusSkillToggle={toggleSelectedFocusSkill}
       onSelectedRoleChange={handleSelectedRoleChange}
       onResumeSession={resumeSession}
@@ -654,6 +710,12 @@ export function InterviewPracticePage() {
       questionCount={questionCount}
       preparationLevel={preparationLevel}
       interviewType={interviewType}
+      generationStrategy={generationStrategy}
+      groundingIndexMode={groundingIndexMode}
+      groundingQuery={groundingQuery}
+      groundingSources={groundingSources}
+      companyContext={companyContextFromProfile(interviewContext?.job_profile)}
+      useCompanyContext={useCompanyContext}
       roles={roles}
       selectedRole={selectedRole}
       selectedFocusSkills={selectedFocusSkills}
@@ -661,6 +723,28 @@ export function InterviewPracticePage() {
       skillGroups={interviewContext?.skill_groups ?? planResponse?.context.skill_groups ?? {}}
     />
   );
+}
+
+function companyContextFromProfile(profile?: Record<string, unknown>): Record<string, string> {
+  if (!profile) return {};
+  const keys = ['company_name', 'company_context', 'industry_domain', 'business_problem'];
+  return Object.fromEntries(
+    keys.flatMap((key) => {
+      const value = profile[key];
+      return typeof value === 'string' && value.trim() ? [[key, value.trim()]] : [];
+    }),
+  );
+}
+
+function singleFocusSelection(
+  selections: Partial<Record<QuestionFocus, string[]>>,
+): Partial<Record<QuestionFocus, string[]>> {
+  for (const [focus, skills] of Object.entries(selections)) {
+    if (focus !== 'all' && skills?.[0]) {
+      return { [focus]: [skills[0]] } as Partial<Record<QuestionFocus, string[]>>;
+    }
+  }
+  return {};
 }
 
 function buildSessionPayload(

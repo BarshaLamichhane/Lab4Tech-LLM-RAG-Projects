@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+import ast
 import json
+import re
 import time
 
+from backend.app.config import CONFIG
+from backend.interview.code_runner import run_python_code
+from backend.interview.grounding_retriever import retrieve_grounding_context
+from backend.interview.python_test_case_templates import validate_python_test_cases
 from backend.job_description.job_description_cleaner_mistral_api import (
     MISTRAL_API_MODEL_NAME,
     get_mistral_client,
 )
 from backend.interview.schemas import (
     AnswerEvaluation,
+    CodeRunRequest,
     ExpectedPointAssessment,
     InterviewContext,
     InterviewQuestion,
@@ -36,6 +43,27 @@ CODING_SCORE_BUDGET = {
     "examples": ("Examples", 0.5),
     "code_quality": ("Code quality", 3.5),
 }
+GROUNDED_SKILLS = {
+    "langgraph",
+    "langchain",
+    "azure ai foundry",
+    "openai api",
+    "mistral api",
+    "crewai",
+    "mcp",
+    "internal architecture",
+    "company policy",
+    "uploaded learning material",
+}
+
+
+def select_evaluation_strategy(question: InterviewQuestion) -> str:
+    skill = (question.skill or "").casefold().strip()
+    if question.is_coding and skill in {"python", "sql"}:
+        return "test_based"
+    if question.requires_grounding or skill in GROUNDED_SKILLS:
+        return "grounded"
+    return "rubric"
 
 
 def build_interview_context(
@@ -109,6 +137,25 @@ def evaluate_answer_with_audit(
     context: InterviewContext | None = None,
     interview_engine: str = "mistral",
 ) -> tuple[AnswerEvaluation, str, str]:
+    strategy = select_evaluation_strategy(question)
+    execution_result = None
+    grounding_context: list[str] = []
+    grounding_used: list[str] = []
+    score_cap = 10.0
+
+    if strategy == "test_based":
+        if (question.skill or "").casefold().strip() == "python":
+            execution_result, score_cap = _run_python_test_evaluation(question, answer)
+        else:
+            execution_result = {
+                "language": "sql",
+                "runner_available": False,
+                "message": "No safe SQL runner is configured. SQL was evaluated with the rubric.",
+                "test_cases": question.test_cases,
+            }
+    elif strategy == "grounded":
+        grounding_context, grounding_used = retrieve_grounding_context(question, context)
+
     point_weights = _expected_point_weights(question)
     score_budget = CODING_SCORE_BUDGET if question.is_coding else NON_CODING_SCORE_BUDGET
     if not answer.strip():
@@ -141,6 +188,9 @@ def evaluate_answer_with_audit(
                 )
                 for category, (label, max_score) in score_budget.items()
             ],
+            evaluation_strategy=strategy,
+            execution_result=execution_result,
+            grounding_used=grounding_used,
         )
         return evaluation, "", ""
 
@@ -152,6 +202,11 @@ def evaluate_answer_with_audit(
         {"category": category, "label": label, "max_score": max_score}
         for category, (label, max_score) in score_budget.items()
     ]
+    strategy_context, strategy_rules = _strategy_prompt_context(
+        strategy=strategy,
+        execution_result=execution_result,
+        grounding_context=grounding_context,
+    )
     prompt = f"""
 You are a senior technical interviewer.
 
@@ -199,6 +254,9 @@ Fixed category score budget:
 Candidate answer:
 {answer}
 
+Evaluation strategy: {strategy}
+{strategy_context}
+
 Rules:
 - Return exactly one expected_point_assessment for every supplied expected point, in the same order.
 - Copy each expected point and its weight exactly.
@@ -211,6 +269,7 @@ Rules:
 - Penalize syntax errors, runtime errors, timeouts, and wrong output even if the explanation sounds good.
 - For SQL answers, evaluate joins, filtering, aggregation, correctness, and readability.
 - For conceptual answers, evaluate accuracy, examples, trade-offs, and role relevance.
+{strategy_rules}
 """
 
     validation_error: Exception | None = None
@@ -224,7 +283,16 @@ Rules:
         raw_response = response.choices[0].message.content
         try:
             payload = json.loads(raw_response)
-            evaluation = _validated_evaluation(payload, question, point_weights, score_budget)
+            evaluation = _validated_evaluation(
+                payload,
+                question,
+                point_weights,
+                score_budget,
+                evaluation_strategy=strategy,
+                execution_result=execution_result,
+                grounding_used=grounding_used,
+                score_cap=score_cap,
+            )
             return evaluation, attempt_prompt, raw_response
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             validation_error = exc
@@ -240,6 +308,10 @@ def _validated_evaluation(
     question: InterviewQuestion,
     point_weights: list[float],
     score_budget: dict[str, tuple[str, float]],
+    evaluation_strategy: str = "rubric",
+    execution_result: dict | None = None,
+    grounding_used: list[str] | None = None,
+    score_cap: float = 10.0,
 ) -> AnswerEvaluation:
     raw_point_assessments = payload.get("expected_point_assessments", [])
     if len(raw_point_assessments) != len(question.expected_points):
@@ -284,14 +356,188 @@ def _validated_evaluation(
         )
 
     score = round(sum(item.awarded_score for item in score_breakdown), 1)
+    if score > score_cap and score > 0:
+        score_breakdown = _capped_score_breakdown(score_breakdown, score_cap)
+        score = round(sum(item.awarded_score for item in score_breakdown), 1)
     normalized_payload = {
         **payload,
         "score": score,
         "rating": _rating_for_score(score),
         "expected_point_assessments": point_assessments,
         "score_breakdown": score_breakdown,
+        "evaluation_strategy": evaluation_strategy,
+        "execution_result": execution_result,
+        "grounding_used": grounding_used or [],
     }
     return AnswerEvaluation(**normalized_payload)
+
+
+def _strategy_prompt_context(
+    strategy: str,
+    execution_result: dict | None,
+    grounding_context: list[str],
+) -> tuple[str, str]:
+    if strategy == "test_based":
+        return (
+            f"Execution and test results:\n{json.dumps(execution_result, ensure_ascii=False)}",
+            (
+                "- Treat execution and test results as authoritative.\n"
+                "- Do not reward claimed correctness that contradicts failed execution or tests.\n"
+                "- For SQL without a safe runner, evaluate against the supplied schema, test cases, "
+                "expected outputs, and rubric only."
+            ),
+        )
+    if strategy == "grounded":
+        return (
+            f"Retrieved grounding context:\n{json.dumps(grounding_context, ensure_ascii=False)}",
+            (
+                "- Treat retrieved grounding context as the source of truth.\n"
+                "- Do not reward claims that contradict the retrieved context.\n"
+                "- Penalize unsupported claims and mention contradictions in weaknesses."
+            ),
+        )
+    return "", "- Use the existing expected points and rubric as the evaluation source."
+
+
+def _run_python_test_evaluation(
+    question: InterviewQuestion,
+    answer: str,
+) -> tuple[dict, float]:
+    if not CONFIG.code_execution_enabled:
+        return {
+            "language": "python",
+            "runner_available": False,
+            "message": "Python test execution is disabled. The answer was evaluated with the rubric.",
+            "test_cases": question.test_cases,
+        }, 10.0
+
+    code = _extract_candidate_code(answer)
+    if not code.strip():
+        return {
+            "language": "python",
+            "runner_available": True,
+            "passed": 0,
+            "failed": len(question.test_cases),
+            "tests": [],
+            "error": "No Python code found in the candidate answer.",
+        }, 4.0
+
+    test_cases = validate_python_test_cases(question.test_cases)
+    if not test_cases:
+        test_cases = [{"input": "", "expected_output": None}]
+    results = []
+    passed = 0
+    failed = 0
+    execution_error = False
+    for index, test_case in enumerate(test_cases, start=1):
+        test_code = _code_with_function_test_harness(code, test_case)
+        run_result = run_python_code(
+            CodeRunRequest(code=test_code, stdin=str(test_case.get("input", "")))
+        )
+        expected_output = test_case.get("expected_output")
+        actual_output = _comparable_output(run_result.stdout, test_case)
+        comparable_expected = _comparable_expected_output(expected_output, test_case)
+        output_matches = (
+            run_result.exit_code == 0
+            and not run_result.timed_out
+            and (
+                expected_output is None
+                or actual_output == comparable_expected
+            )
+        )
+        if output_matches:
+            passed += 1
+        else:
+            failed += 1
+        if run_result.exit_code not in {0, None} or run_result.timed_out:
+            execution_error = True
+        results.append(
+            {
+                "test": index,
+                "input": test_case.get("input", ""),
+                "args": test_case.get("args"),
+                "expected_output": expected_output,
+                "stdout": run_result.stdout,
+                "stderr": run_result.stderr,
+                "exit_code": run_result.exit_code,
+                "timed_out": run_result.timed_out,
+                "passed": output_matches,
+            }
+        )
+
+    score_cap = 4.0 if execution_error else 6.0 if failed > passed else 10.0
+    return {
+        "language": "python",
+        "runner_available": True,
+        "passed": passed,
+        "failed": failed,
+        "tests": results,
+    }, score_cap
+
+
+def _code_with_function_test_harness(code: str, test_case: dict) -> str:
+    if "args" not in test_case:
+        return code
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return code
+    function = next(
+        (
+            node.name
+            for node in reversed(tree.body)
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+        ),
+        None,
+    )
+    if not function:
+        return code
+    args_json = json.dumps(test_case["args"])
+    return (
+        f"{code}\n\n"
+        "import json as __hire_ready_json\n"
+        f"__hire_ready_args = __hire_ready_json.loads({args_json!r})\n"
+        f"__hire_ready_result = {function}(*__hire_ready_args)\n"
+        "print(__hire_ready_json.dumps(__hire_ready_result, sort_keys=True))\n"
+    )
+
+
+def _comparable_output(stdout: str, test_case: dict) -> str:
+    stripped = stdout.strip()
+    if "args" not in test_case:
+        return stripped
+    lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+    return lines[-1] if lines else ""
+
+
+def _comparable_expected_output(expected_output: object, test_case: dict) -> str:
+    if "args" in test_case:
+        return json.dumps(expected_output, sort_keys=True)
+    return str(expected_output).strip()
+
+
+def _extract_candidate_code(answer: str) -> str:
+    fenced_code = re.search(r"```(?:python)?\s*(.*?)```", answer, flags=re.IGNORECASE | re.DOTALL)
+    return fenced_code.group(1).strip() if fenced_code else answer.strip()
+
+
+def _capped_score_breakdown(
+    score_breakdown: list[ScoreBreakdownItem],
+    score_cap: float,
+) -> list[ScoreBreakdownItem]:
+    total = sum(item.awarded_score for item in score_breakdown)
+    if total <= score_cap or total <= 0:
+        return score_breakdown
+    remaining = score_cap
+    capped = []
+    for index, item in enumerate(score_breakdown):
+        if index == len(score_breakdown) - 1:
+            awarded = round(max(0.0, remaining), 1)
+        else:
+            awarded = round(min(item.awarded_score * score_cap / total, remaining), 1)
+            remaining = round(remaining - awarded, 1)
+        capped.append(item.model_copy(update={"awarded_score": awarded}))
+    return capped
 
 
 def _expected_point_weights(question: InterviewQuestion) -> list[float]:

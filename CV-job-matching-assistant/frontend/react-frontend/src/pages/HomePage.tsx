@@ -47,7 +47,7 @@ export function HomePage() {
           <p>Generate interview questions from selected skills, practise Python coding, and score answers.</p>
           <div className="home-actions">
             <Link to="/interview-practice">Preparation mode</Link>
-            <span className="coming-soon">Adaptive interview</span>
+            <Link to="/adaptive-interview">Adaptive interview</Link>
           </div>
         </article>
       </section>

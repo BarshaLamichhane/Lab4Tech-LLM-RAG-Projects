@@ -16,6 +16,8 @@ PreparationInterviewType = Literal[
     "behavioral",
     "mixed",
 ]
+QuestionGenerationStrategy = Literal["llm", "grounded"]
+GroundingIndexMode = Literal["use_existing", "recreate", "update"]
 QuestionFocus = Literal[
     "all",
     "matched_strongly_required",
@@ -54,6 +56,11 @@ class InterviewQuestion(BaseModel):
     follow_up_questions: list[str] = Field(default_factory=list)
     scoring_rubric: list[str] = Field(default_factory=list)
     hint: str = ""
+    requires_grounding: bool = False
+    grounding_query: str | None = None
+    test_cases: list[dict[str, Any]] = Field(default_factory=list)
+    generation_strategy: QuestionGenerationStrategy = "llm"
+    grounding_used: list[str] = Field(default_factory=list)
 
 
 class InterviewPlan(BaseModel):
@@ -113,6 +120,9 @@ class AnswerEvaluation(BaseModel):
     learning_recommendations: list[str] = Field(default_factory=list)
     expected_point_assessments: list[ExpectedPointAssessment] = Field(default_factory=list)
     score_breakdown: list[ScoreBreakdownItem] = Field(default_factory=list)
+    evaluation_strategy: str = "rubric"
+    execution_result: dict[str, Any] | None = None
+    grounding_used: list[str] = Field(default_factory=list)
 
 
 class LearningPathRequest(BaseModel):
@@ -127,6 +137,20 @@ class PreparationInterviewRequest(BaseModel):
     question_count: int = Field(default=5, ge=1, le=20)
     level: PreparationLevel = "intermediate"
     interview_type: PreparationInterviewType = "mixed"
+    generation_strategy: QuestionGenerationStrategy = "llm"
+    grounding_query: str | None = None
+    grounding_index_mode: GroundingIndexMode = "use_existing"
+    use_company_context: bool = False
+    company_context: dict[str, str] | None = None
+
+
+class GroundingIndexRequest(BaseModel):
+    mode: GroundingIndexMode = "update"
+
+
+class GroundingUrlRequest(BaseModel):
+    url: str
+    filename: str | None = None
 
 
 class PreparationInterviewResponse(BaseModel):
@@ -145,6 +169,8 @@ class RegeneratePreparationQuestionRequest(BaseModel):
     interview_type: PreparationInterviewType = "mixed"
     question_id: str
     existing_questions: list[InterviewQuestion]
+    use_company_context: bool = False
+    company_context: dict[str, str] | None = None
 
 
 class QuestionQualityReportRequest(BaseModel):
@@ -156,20 +182,33 @@ class QuestionQualityReportRequest(BaseModel):
 class AdaptiveInterviewStartRequest(BaseModel):
     role: str
     selected_skills: list[str]
-    level: str = "intermediate"
+    level: PreparationLevel = "intermediate"
+    max_turns: int = Field(default=5, ge=2, le=10)
+    context: InterviewContext | None = None
+    generation_strategy: QuestionGenerationStrategy = "llm"
+    grounding_query: str | None = None
+    grounding_index_mode: GroundingIndexMode = "use_existing"
+    use_company_context: bool = False
+    company_context: dict[str, str] | None = None
 
 
 class AdaptiveInterviewTurn(BaseModel):
-    question: str
+    question: InterviewQuestion
     answer: str | None = None
-    feedback: str | None = None
-    score: float | None = None
+    evaluation: AnswerEvaluation | None = None
 
 
 class AdaptiveInterviewState(BaseModel):
     role: str
     selected_skills: list[str]
-    level: str
+    level: PreparationLevel
+    max_turns: int = Field(default=5, ge=2, le=10)
+    context: InterviewContext | None = None
+    generation_strategy: QuestionGenerationStrategy = "llm"
+    grounding_query: str | None = None
+    grounding_index_mode: GroundingIndexMode = "use_existing"
+    use_company_context: bool = False
+    company_context: dict[str, str] | None = None
     turns: list[AdaptiveInterviewTurn] = Field(default_factory=list)
 
 
@@ -180,9 +219,9 @@ class AdaptiveInterviewAnswerRequest(BaseModel):
 
 class AdaptiveInterviewResponse(BaseModel):
     state: AdaptiveInterviewState
-    next_question: str | None = None
+    next_question: InterviewQuestion | None = None
     finished: bool = False
-    final_summary: str | None = None
+    final_summary: dict[str, Any] | None = None
 
 
 class CodeRunRequest(BaseModel):

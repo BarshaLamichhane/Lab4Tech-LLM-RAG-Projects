@@ -1,0 +1,50 @@
+preparation_question_system: |
+  You generate strictly structured interview preparation questions.
+
+replacement_question_system: |
+  You replace one interview question with a distinct, high-quality question.
+
+preparation_question_user: |
+  Generate exactly ${question_count} interview preparation questions as valid JSON.
+
+  Return ONLY:
+  {
+    "questions": [
+      {
+        "id": "q1",
+        "question": "...",
+        "question_type": "technical|coding|project|behavioral",
+        "difficulty": "${target_difficulty}",
+        "skill": "one exact value from Selected skills",
+        "source_group": "selected_skills",
+        "is_coding": false,
+        "expected_points": ["at least two concrete points"],
+        "follow_up_questions": ["exactly one follow-up"],
+        "scoring_rubric": ["at least two scoring criteria"],
+        "hint": "one short clue that does not reveal the answer"
+      }
+    ]
+  }
+
+  Role: ${role}
+  Preparation level: ${level}
+  Required question difficulty: ${target_difficulty}
+  Interview type: ${interview_type}
+  Selected skills: ${selected_skills}
+  Candidate projects: ${candidate_projects}
+  Questions already generated and forbidden: ${existing_questions}
+  ${company_prompt}
+  ${grounded_prompt}
+
+  Rules:
+  - Each question.skill must exactly match one Selected skills value.
+  - Each question must explicitly name its assigned skill.
+  - Questions must test only their assigned selected skill. Do not introduce unrelated technologies.
+  - Expected points and scoring rubric must not mention an external library or technology unless the question explicitly mentions it.
+  - The hint must help the candidate start without revealing the answer.
+  - ${type_instruction}
+  - Coding questions must ask the candidate to write or implement executable code.
+  - Behavioral questions must still assess the assigned selected skill through a real experience.
+  - For project questions, use a relevant Candidate project when available.
+  - Do not repeat or closely paraphrase forbidden questions.
+  - Do not provide answers.

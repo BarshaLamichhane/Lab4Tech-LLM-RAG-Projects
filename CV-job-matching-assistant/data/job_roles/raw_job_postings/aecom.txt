@@ -1,0 +1,40 @@
+AI Solution Engineer 
+
+
+About the job
+Company Description 
+At AECOM, we're delivering a better world. Whether improving your commute, keeping the lights on, providing access to clean water, or transforming skylines, our work helps people and communities thrive. We are the world's trusted infrastructure consulting firm, partnering with clients to solve the world’s most complex challenges and build legacies for future generations.
+There has never been a better time to be at AECOM. With accelerating infrastructure investment worldwide, our services are in great demand. We invite you to bring your bold ideas and big dreams and become part of a global team of over 50,000 planners, designers, engineers, scientists, digital innovators, program and construction managers and other professionals delivering projects that create a positive and tangible impact around the world.
+
+
+Role Description 
+At AECOM, we're building a new kind of AI Engineering team — one that pairs the speed and ownership of a startup with the scale and real-world reach of one of the world's leading infrastructure firms. Based in Zug, we turn everyday operational and business challenges into intelligent, production-grade systems: the workflows, internal tools, automations, and applications that connect across the platforms our global organisation runs on — shipped fast and built to last.
+You'll work shoulder to shoulder with business and engineering teams — scoping a real problem, prototyping a solution in days rather than months, and deploying it where it makes a measurable difference. It's a deeply hands-on role, grounded in frontier models, modern orchestration frameworks, and serious software engineering craft.
+You'll design and ship:
+Enterprise AI agents and internal copilots 
+Workflow automations and orchestration systems 
+AI-powered knowledge and retrieval systems 
+AI-powered workflows integrated across enterprise platforms and internal systems 
+
+
+Qualifications
+
+Degree in Computer Science, Business, Entrepreneurship, or a related field/practical experience 
+Strong software engineering skills, preferably in Python
+Experience building AI-powered applications, automation tools, or internal systems using modern LLM technologies 
+Familiarity with frontier AI models and APIs such as OpenAI, Claude, Gemini, or similar 
+Experience working with APIs, backend systems, cloud platforms, and enterprise integrations 
+Strong systems-thinking, problem-solving, and communication skills 
+Ability to rapidly prototype, iterate, and deploy practical solutions in production environments 
+Comfortable operating in fast-moving environments with high ownership and autonomy
+
+
+Preferred Skills
+
+Experience building AI-powered workflows, copilots, automation systems, or internal operational tools 
+Familiarity with orchestration concepts such as workflow automation, retrieval systems, tool calling, or multi-step AI workflows 
+Experience with cloud infrastructure, containers, and modern deployment workflows, ideally within Azure 
+Understanding of enterprise considerations such as governance, permissions, reliability, and human-in-the-loop processes 
+Startup, product engineering, or entrepreneurial experience with a strong builder mindset
+
+

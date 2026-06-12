@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -16,6 +17,7 @@ import yaml
 from dotenv import load_dotenv
 from mistralai.client import Mistral
 from pydantic import BaseModel, Field, ValidationError
+from backend.job_description.job_profile_catalog import update_profile_catalog
 
 try:
     from backend.cv.cv_skill_extractor import (
@@ -60,6 +62,10 @@ class SkillEvidence(BaseModel):
 
 class JobSkills(BaseModel):
     role: str = ""
+    company_name: str = ""
+    company_context: str = ""
+    industry_domain: str = ""
+    business_problem: str = ""
     strongly_required_skills: list[SkillEvidence] = Field(default_factory=list)
     required_skills: list[str] = Field(default_factory=list)
     preferred_skills: list[str] = Field(default_factory=list)
@@ -346,6 +352,10 @@ def clean_job_skills(data: JobSkills) -> JobSkills:
         cleaned_strongly_required_skills.append(skill_evidence)
 
     data.role = normalize_skill(data.role)
+    data.company_name = normalize_skill(data.company_name)
+    data.company_context = normalize_skill(data.company_context)
+    data.industry_domain = normalize_skill(data.industry_domain)
+    data.business_problem = normalize_skill(data.business_problem)
     data.strongly_required_skills = _clean_strongly_required_skills(cleaned_strongly_required_skills)
     data.required_skills = _clean_required_skills(data.required_skills, data.strongly_required_skills)
     data.preferred_skills = _clean_skill_list(data.preferred_skills)
@@ -408,9 +418,9 @@ def extract_job_skills(
     return extracted_skills
 
 
-def _slugify_role(role: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "_", role.lower()).strip("_")
-    return slug or "unknown_role"
+def _slugify(value: str, fallback: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+    return slug or fallback
 
 
 def save_extracted_skills(
@@ -418,12 +428,16 @@ def save_extracted_skills(
     output_dir: Path = OUTPUT_JOB_DESCRIPTION_SKILLS_DIR,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{_slugify_role(data.role)}_skills.json"
+    year = datetime.now(UTC).year
+    role_slug = _slugify(data.role, "unknown_role")
+    company_slug = _slugify(data.company_name, "unknown_company")
+    output_path = output_dir / f"{role_slug}_{company_slug}_{year}.json"
 
     output_path.write_text(
         data.model_dump_json(indent=4),
         encoding="utf-8",
     )
+    update_profile_catalog(output_dir, data.model_dump(), output_path.name)
     logger.info("Saved extracted job skills to %s", output_path)
     return output_path
 

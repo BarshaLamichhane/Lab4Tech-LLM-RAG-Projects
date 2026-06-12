@@ -9,6 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+from backend.job_description.job_profile_catalog import profile_display_name, profile_paths
 
 try:
     from backend.cv.cv_parser import read_cv_text
@@ -122,12 +123,13 @@ def load_saved_job_profiles(data_dir: Path = DEFAULT_JOB_SKILLS_DIR) -> dict[str
     if not data_dir.exists():
         return job_profiles
 
-    for file_path in sorted(data_dir.glob("*.json")):
+    for file_path in profile_paths(data_dir):
         with file_path.open(encoding="utf-8") as file:
             job_profile = json.load(file)
 
         role = job_profile.get("role") or file_path.stem.replace("_skills", "").replace("_", " ").title()
-        job_profiles[role] = job_profile
+        display_name = profile_display_name(job_profile)
+        job_profiles[display_name if display_name not in job_profiles else f"{display_name} ({file_path.stem})"] = job_profile
 
     return job_profiles
 
@@ -360,6 +362,8 @@ def get_saved_job_profile_by_role(
 
     for saved_role, job_profile in job_profiles.items():
         if normalize_for_matching(saved_role) == normalized_target_role:
+            return job_profile
+        if normalize_for_matching(job_profile.get("role", "")) == normalized_target_role:
             return job_profile
 
     available_roles = ", ".join(sorted(job_profiles))

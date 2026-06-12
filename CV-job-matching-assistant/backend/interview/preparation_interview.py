@@ -3,15 +3,25 @@ from __future__ import annotations
 import json
 import re
 import time
+from pathlib import Path
+from string import Template
 
 from pydantic import ValidationError
+import yaml
 
 from backend.interview.expected_point_templates import python_expected_point_template
+from backend.interview.grounding_index import ensure_grounding_index, retrieve_grounding_context
+from backend.interview.python_test_case_templates import (
+    python_test_cases_for_question,
+    validate_python_test_cases,
+)
 from backend.interview.schemas import (
+    GroundingIndexMode,
     InterviewQuestion,
     PreparationInterviewResponse,
     PreparationInterviewType,
     PreparationLevel,
+    QuestionGenerationStrategy,
 )
 from backend.job_description.job_description_cleaner_mistral_api import (
     MISTRAL_API_MODEL_NAME,
@@ -54,6 +64,8 @@ EXTERNAL_TECH_REFERENCES = {
     "pytorch",
     "rag",
 }
+PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "interview_preparation_question_generator.yml"
+MAX_GENERATION_ATTEMPTS = 5
 
 
 def generate_preparation_interview(
@@ -63,20 +75,34 @@ def generate_preparation_interview(
     question_count: int = 5,
     level: PreparationLevel = "intermediate",
     interview_type: PreparationInterviewType = "mixed",
+    generation_strategy: QuestionGenerationStrategy = "llm",
+    grounding_query: str | None = None,
+    grounding_index_mode: GroundingIndexMode = "use_existing",
+    use_company_context: bool = False,
+    company_context: dict[str, str] | None = None,
 ) -> PreparationInterviewResponse:
     selected_skills = _unique_non_empty(selected_skills)
     if not selected_skills:
         raise ValueError("Select at least one skill for preparation mode.")
 
+    grounding_context: list[dict] = []
+    if generation_strategy == "grounded":
+        ensure_grounding_index(grounding_index_mode)
+        query = grounding_query or " ".join([role, *selected_skills])
+        grounding_context = retrieve_grounding_context(query)
+        if not grounding_context:
+            raise ValueError("No grounding context found for the selected skills.")
+    grounding_used = _grounding_used(grounding_context)
+
     question_count = max(1, min(question_count, 20))
     accepted: list[InterviewQuestion] = []
 
-    for _ in range(3):
+    for _ in range(MAX_GENERATION_ATTEMPTS):
         remaining = question_count - len(accepted)
         if remaining <= 0:
             break
         response = _complete_mistral_chat(
-            system_prompt="You generate strictly structured interview preparation questions.",
+            system_prompt=_prompt("preparation_question_system"),
             user_prompt=_build_prompt(
                 role=role,
                 selected_skills=selected_skills,
@@ -85,6 +111,10 @@ def generate_preparation_interview(
                 interview_type=interview_type,
                 candidate_projects=candidate_projects or [],
                 existing_questions=[question.question for question in accepted],
+                generation_strategy=generation_strategy,
+                grounding_context=grounding_context,
+                use_company_context=use_company_context,
+                company_context=company_context,
             ),
             temperature=0.2,
         )
@@ -95,6 +125,8 @@ def generate_preparation_interview(
                 selected_skills=selected_skills,
                 level=level,
                 interview_type=interview_type,
+                generation_strategy=generation_strategy,
+                grounding_used=grounding_used,
             )
             if not question:
                 continue
@@ -127,11 +159,13 @@ def regenerate_preparation_question(
     interview_type: PreparationInterviewType,
     question_id: str,
     existing_questions: list[InterviewQuestion],
+    use_company_context: bool = False,
+    company_context: dict[str, str] | None = None,
 ) -> InterviewQuestion:
     forbidden = [question.question for question in existing_questions]
     for _ in range(3):
         response = _complete_mistral_chat(
-            system_prompt="You replace one interview question with a distinct, high-quality question.",
+            system_prompt=_prompt("replacement_question_system"),
             user_prompt=_build_prompt(
                 role=role,
                 selected_skills=_unique_non_empty(selected_skills),
@@ -140,6 +174,8 @@ def regenerate_preparation_question(
                 interview_type=interview_type,
                 candidate_projects=candidate_projects,
                 existing_questions=forbidden,
+                use_company_context=use_company_context,
+                company_context=company_context,
             ),
             temperature=0.3,
         )
@@ -162,6 +198,10 @@ def _build_prompt(
     interview_type: PreparationInterviewType,
     candidate_projects: list[dict],
     existing_questions: list[str],
+    generation_strategy: QuestionGenerationStrategy = "llm",
+    grounding_context: list[dict] | None = None,
+    use_company_context: bool = False,
+    company_context: dict[str, str] | None = None,
 ) -> str:
     target_difficulty = LEVEL_DIFFICULTY[level]
     type_instruction = {
@@ -171,56 +211,52 @@ def _build_prompt(
         "behavioral": 'Every question_type must be "behavioral" and is_coding must be false.',
         "mixed": 'Use a useful mix of "technical", "coding", "project", and "behavioral". Set is_coding true only for coding questions.',
     }[interview_type]
-    return f"""
-Generate exactly {question_count} interview preparation questions as valid JSON.
+    grounded_prompt = ""
+    if generation_strategy == "grounded":
+        grounded_prompt = f"""
+Generation strategy: grounded
+Grounding context:
+{json.dumps(grounding_context or [], ensure_ascii=False)}
 
-Return ONLY:
-{{
-  "questions": [
-    {{
-      "id": "q1",
-      "question": "...",
-      "question_type": "technical|coding|project|behavioral",
-      "difficulty": "{target_difficulty}",
-      "skill": "one exact value from Selected skills",
-      "source_group": "selected_skills",
-      "is_coding": false,
-      "expected_points": ["at least two concrete points"],
-      "follow_up_questions": ["exactly one follow-up"],
-      "scoring_rubric": ["at least two scoring criteria"],
-      "hint": "one short clue that does not reveal the answer"
-    }}
-  ]
-}}
-
-Role: {role}
-Preparation level: {level}
-Required question difficulty: {target_difficulty}
-Interview type: {interview_type}
-Selected skills: {json.dumps(selected_skills, ensure_ascii=False)}
-Candidate projects: {json.dumps(candidate_projects, ensure_ascii=False)}
-Questions already generated and forbidden: {json.dumps(existing_questions, ensure_ascii=False)}
-
-Rules:
-- Each question.skill must exactly match one Selected skills value.
-- Each question must explicitly name its assigned skill.
-- Questions must test only their assigned selected skill. Do not introduce unrelated technologies.
-- Expected points and scoring rubric must not mention an external library or technology unless the question explicitly mentions it.
-- The hint must help the candidate start without revealing the answer.
-- {type_instruction}
-- Coding questions must ask the candidate to write or implement executable code.
-- Behavioral questions must still assess the assigned selected skill through a real experience.
-- For project questions, use a relevant Candidate project when available.
-- Do not repeat or closely paraphrase forbidden questions.
-- Do not provide answers.
+Grounded generation rules:
+- Generate every question only from the selected skills and grounding context.
+- Do not introduce claims, APIs, policies, or architecture details absent from grounding context.
+- Expected points, rubric, follow-up, and hint must also be supported by grounding context.
 """
+    company_prompt = ""
+    if use_company_context and company_context:
+        company_prompt = f"""
+Use company context: true
+Company context:
+{json.dumps(company_context, ensure_ascii=False)}
 
+Company-context rules:
+- Adapt questions to the company domain where appropriate.
+- For coding questions, create realistic tasks related to the company context when natural.
+- Do not force company context when it makes the question unnatural.
+- Keep the assigned selected skill as the actual subject being assessed.
+"""
+    return Template(_prompt("preparation_question_user")).substitute(
+        question_count=question_count,
+        target_difficulty=target_difficulty,
+        role=role,
+        level=level,
+        interview_type=interview_type,
+        selected_skills=json.dumps(selected_skills, ensure_ascii=False),
+        candidate_projects=json.dumps(candidate_projects, ensure_ascii=False),
+        existing_questions=json.dumps(existing_questions, ensure_ascii=False),
+        type_instruction=type_instruction,
+        company_prompt=company_prompt,
+        grounded_prompt=grounded_prompt,
+    )
 
 def _validated_question(
     raw_question: object,
     selected_skills: list[str],
     level: PreparationLevel,
     interview_type: PreparationInterviewType,
+    generation_strategy: QuestionGenerationStrategy = "llm",
+    grounding_used: list[str] | None = None,
 ) -> InterviewQuestion | None:
     if not isinstance(raw_question, dict):
         return None
@@ -257,7 +293,12 @@ def _validated_question(
             return None
 
     trusted_template = python_expected_point_template(canonical_skill, question.question)
-    updates = {"skill": canonical_skill, "source_group": "selected_skills"}
+    updates = {
+        "skill": canonical_skill,
+        "source_group": "selected_skills",
+        "generation_strategy": generation_strategy,
+        "grounding_used": grounding_used or [],
+    }
     if trusted_template:
         updates.update(
             {
@@ -268,6 +309,11 @@ def _validated_question(
         )
     final_expected_points = updates.get("expected_points", question.expected_points)
     updates["expected_point_weights"] = _equal_weights(len(final_expected_points))
+    if question.is_coding and _normalize(canonical_skill) == "python":
+        updates["test_cases"] = (
+            python_test_cases_for_question(canonical_skill, question.question)
+            or validate_python_test_cases(question.test_cases)
+        )
     return question.model_copy(update=updates)
 
 
@@ -328,6 +374,17 @@ def _questions_are_similar(first: str, second: str, threshold: float = 0.72) -> 
 
 def _normalize(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
+
+
+def _grounding_used(grounding_context: list[dict]) -> list[str]:
+    return list(dict.fromkeys(str(item.get("source", "unknown source")).strip() for item in grounding_context))
+
+
+def _prompt(name: str) -> str:
+    prompts = yaml.safe_load(PROMPT_PATH.read_text(encoding="utf-8")) or {}
+    if name not in prompts:
+        raise KeyError(f"Prompt '{name}' not found in {PROMPT_PATH}")
+    return str(prompts[name])
 
 
 def _complete_mistral_chat(system_prompt: str, user_prompt: str, temperature: float):

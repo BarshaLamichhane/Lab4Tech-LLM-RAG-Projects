@@ -67,6 +67,12 @@ from backend.interview.preparation_interview import (
     regenerate_preparation_question,
 )
 from backend.interview.progress_dashboard import build_progress_dashboard
+from backend.interview.grounding_index import (
+    ensure_grounding_index,
+    list_grounding_sources,
+    save_grounding_document,
+    save_grounding_url,
+)
 from backend.job_description.job_description_cleaner_mistral_api import MISTRAL_API_MODEL_NAME
 from backend.interview.schemas import (
     AdaptiveInterviewAnswerRequest,
@@ -77,6 +83,8 @@ from backend.interview.schemas import (
     CodeRunRequest,
     CodeRunResponse,
     EvaluateAnswerRequest,
+    GroundingIndexRequest,
+    GroundingUrlRequest,
     InterviewContext,
     InterviewQuestion,
     LearningPathRequest,
@@ -227,6 +235,51 @@ def get_interview_sessions(user: CurrentUser = Depends(require_user)) -> list[di
 @app.get("/api/interview/progress")
 def get_interview_progress(user: CurrentUser = Depends(require_user)) -> dict:
     return build_progress_dashboard(load_interview_sessions(user.username))
+
+
+@app.get("/api/interview/grounding/sources")
+def get_grounding_sources(user: CurrentUser = Depends(require_user)) -> list[dict]:
+    return list_grounding_sources()
+
+
+@app.post("/api/interview/grounding/upload", status_code=201)
+async def upload_grounding_documents(
+    files: list[UploadFile] = File(...),
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    saved = []
+    for file in files:
+        content = await file.read()
+        if len(content) > CONFIG.max_upload_bytes:
+            raise HTTPException(status_code=400, detail="Grounding document exceeds upload limit")
+        try:
+            saved.append(save_grounding_document(file.filename or "material.txt", content))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"documents": saved, "sources": list_grounding_sources()}
+
+
+@app.post("/api/interview/grounding/url", status_code=201)
+def upload_grounding_url(
+    request: GroundingUrlRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        saved = save_grounding_url(request.url, request.filename, CONFIG.max_upload_bytes)
+        return {"document": saved, "sources": list_grounding_sources()}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/grounding/index")
+def build_grounding_index(
+    request: GroundingIndexRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        return ensure_grounding_index(request.mode)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/interview/sessions/{session_id}", response_model=InterviewSessionResponse)
@@ -442,6 +495,11 @@ def create_preparation_interview(
             question_count=request.question_count,
             level=request.level,
             interview_type=request.interview_type,
+            generation_strategy=request.generation_strategy,
+            grounding_query=request.grounding_query,
+            grounding_index_mode=request.grounding_index_mode,
+            use_company_context=request.use_company_context,
+            company_context=request.company_context,
         )
         return result
     except Exception as exc:
@@ -464,6 +522,8 @@ def regenerate_preparation_question_route(
             existing_questions=[
                 question for question in request.existing_questions if question.id != request.question_id
             ],
+            use_company_context=request.use_company_context,
+            company_context=request.company_context,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -500,7 +560,15 @@ def submit_adaptive_answer_route(
     user: CurrentUser = Depends(require_user),
 ) -> AdaptiveInterviewResponse:
     try:
-        return submit_adaptive_answer(request)
+        result = submit_adaptive_answer(request)
+        if result.finished:
+            save_user_session(
+                user.username,
+                "adaptive_interview",
+                f"{result.state.role} adaptive interview",
+                result.model_dump(mode="json"),
+            )
+        return result
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

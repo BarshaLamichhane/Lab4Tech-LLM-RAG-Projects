@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { useAuth } from './AuthContext';
 import { AccountPage } from './pages/AccountPage';
+import { AdaptiveInterviewPage } from './pages/AdaptiveInterviewPage';
 import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { HomePage } from './pages/HomePage';
@@ -35,6 +36,7 @@ export function AppRoutes() {
       <Route path="/new-job-match" element={<ProtectedRoute><NewJobMatchPage /></ProtectedRoute>} />
       <Route path="/job-skill-extractor" element={<ProtectedRoute><JobSkillExtractorPage /></ProtectedRoute>} />
       <Route path="/interview-practice" element={<ProtectedRoute><InterviewPracticePage /></ProtectedRoute>} />
+      <Route path="/adaptive-interview" element={<ProtectedRoute><AdaptiveInterviewPage /></ProtectedRoute>} />
       <Route path="/interview-progress" element={<ProtectedRoute><InterviewProgressPage /></ProtectedRoute>} />
       <Route path="/sessions" element={<ProtectedRoute><SessionHistoryPage /></ProtectedRoute>} />
       <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />

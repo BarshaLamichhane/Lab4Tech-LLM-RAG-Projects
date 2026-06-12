@@ -38,8 +38,8 @@ export function App() {
             <button type="button">Interview Assistant</button>
             <div className="nav-dropdown">
               <NavLink to="/interview-practice">Preparation mode</NavLink>
+              <NavLink to="/adaptive-interview">Adaptive interview</NavLink>
               <NavLink to="/interview-progress">Progress dashboard</NavLink>
-              <span className="nav-disabled">Adaptive interview</span>
             </div>
           </div>
           <NavLink to="/sessions">Sessions</NavLink>

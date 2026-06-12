@@ -7,6 +7,10 @@ mistral_api_job_description_extractor: |
 
   {
       "role": "string",
+      "company_name": "string",
+      "company_context": "short description of what the company does",
+      "industry_domain": "short industry/domain label",
+      "business_problem": "short description of the main problem the company solves",
 
       "strongly_required_skills": [
           {
@@ -32,6 +36,12 @@ mistral_api_job_description_extractor: |
 
   - Extract only information explicitly written in the job description.
   - Do not invent skills.
+  - Keep company context fields short, factual, and grounded in the job description.
+  - company_name must be empty when the company name is not stated.
+  - company_context should summarize what the company or team does.
+  - industry_domain should be a concise domain such as weather forecasting, financial services, or healthcare.
+  - business_problem should summarize the user or business problem being solved.
+  - Return an empty string for any company field that cannot be supported by the job description.
   - Keep skill names concise and standardized.
   - Put a skill in strongly_required_skills only when the job description makes it a must-have, core, essential, mandatory, non-negotiable, solid understanding, or repeated requirement.
   - Do not put years of experience into strongly_required_skills; put them only into experience.
@@ -59,7 +69,7 @@ mistral_api_job_description_extractor: |
   - tools_and_platforms must contain concrete tools, frameworks, cloud platforms, databases, or infrastructure platforms only.
   - Do not put programming languages such as Python in tools_and_platforms.
   - required_skills, preferred_skills, soft_skills, and tools_and_platforms must be arrays of strings only.
-  - Ignore salary, location, benefits, and company marketing text.
+  - Ignore salary, location, benefits, and unsupported marketing claims.
   - Return JSON only.
   - Do not paraphrase the strongly_required_skills verbatim quote.
 
@@ -67,4 +77,3 @@ mistral_api_job_description_extractor: |
   """
   ${job_description}
   """
-

@@ -1,6 +1,7 @@
 import { ChangeEvent, RefObject, useEffect, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { Link } from 'react-router-dom';
+import { GroundingPipelineSteps } from '../learning/GroundingPipelineSteps';
 
 import type {
   AnswerEvaluation,
@@ -8,10 +9,13 @@ import type {
   InterviewPlan,
   InterviewPracticeSession,
   InterviewQuestion,
+  GroundingIndexMode,
+  GroundingSource,
   LearningPathItem,
   PreparationInterviewType,
   PreparationLevel,
   QuestionFocus,
+  QuestionGenerationStrategy,
 } from '../types';
 
 interface InterviewPracticeViewProps {
@@ -35,6 +39,19 @@ interface InterviewPracticeViewProps {
   loading: boolean;
   loadingLabel: string;
   noteValue: string;
+  generationStrategy: QuestionGenerationStrategy;
+  groundingIndexMode: GroundingIndexMode;
+  groundingQuery: string;
+  groundingSources: GroundingSource[];
+  companyContext: Record<string, string>;
+  useCompanyContext: boolean;
+  onAddGroundingUrl: (url: string) => void;
+  onBuildGroundingIndex: () => void;
+  onGenerationStrategyChange: (strategy: QuestionGenerationStrategy) => void;
+  onGroundingIndexModeChange: (mode: GroundingIndexMode) => void;
+  onGroundingQueryChange: (query: string) => void;
+  onUseCompanyContextChange: (enabled: boolean) => void;
+  onUploadGrounding: (event: ChangeEvent<HTMLInputElement>) => void;
   onCvBlur: () => void;
   onEvaluateAnswer: () => void;
   onGeneratePlan: () => void;
@@ -53,7 +70,6 @@ interface InterviewPracticeViewProps {
   onQuestionSelect: (index: number) => void;
   onRefreshRoles: () => void;
   onRunCode: () => void;
-  onSelectedFocusSkillsChange: (focus: QuestionFocus, skills: string[]) => void;
   onSelectedFocusSkillToggle: (focus: QuestionFocus, skill: string) => void;
   onSelectedRoleChange: (role: string) => void;
   onResumeSession: (sessionId: string) => void;
@@ -96,6 +112,19 @@ export function InterviewPracticeView({
   loading,
   loadingLabel,
   noteValue,
+  generationStrategy,
+  groundingIndexMode,
+  groundingQuery,
+  groundingSources,
+  companyContext,
+  useCompanyContext,
+  onAddGroundingUrl,
+  onBuildGroundingIndex,
+  onGenerationStrategyChange,
+  onGroundingIndexModeChange,
+  onGroundingQueryChange,
+  onUseCompanyContextChange,
+  onUploadGrounding,
   onCvBlur,
   onEvaluateAnswer,
   onGeneratePlan,
@@ -114,7 +143,6 @@ export function InterviewPracticeView({
   onQuestionSelect,
   onRefreshRoles,
   onRunCode,
-  onSelectedFocusSkillsChange,
   onSelectedFocusSkillToggle,
   onSelectedRoleChange,
   onResumeSession,
@@ -137,12 +165,17 @@ export function InterviewPracticeView({
 }: InterviewPracticeViewProps) {
   const [revealedGuidance, setRevealedGuidance] = useState<Set<string>>(new Set());
   const [revealedHints, setRevealedHints] = useState<Set<string>>(new Set());
+  const [groundingUrl, setGroundingUrl] = useState('');
   const availableSkillFocuses = SKILL_FOCUS_OPTIONS.filter(
     (option) => (skillGroups[option.value]?.length ?? 0) > 0,
   );
   const selectedSkillEntries = Object.entries(selectedFocusSkills).flatMap(([focus, skills]) =>
     (skills ?? []).map((skill) => ({ focus: focus as QuestionFocus, skill })),
   );
+  const selectedSkill = selectedSkillEntries[0] ?? null;
+  const selectedCategoryLabel = selectedSkill
+    ? SKILL_FOCUS_OPTIONS.find((option) => option.value === selectedSkill.focus)?.label
+    : null;
   const codingQuestion = currentQuestion ? isCodingQuestion(currentQuestion) : false;
   const completedCount = plan
     ? plan.questions.filter((question) => Boolean(evaluations[question.id])).length
@@ -266,7 +299,96 @@ export function InterviewPracticeView({
             </label>
           </div>
 
-          <label className="field-label">Question focus</label>
+          <div className="grounding-controls">
+            {Object.keys(companyContext).length > 0 && (
+              <div className="company-context-control">
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={useCompanyContext}
+                    onChange={(event) => onUseCompanyContextChange(event.target.checked)}
+                  />
+                  <span>Use company context</span>
+                </label>
+                <small>
+                  {companyContext.company_name && <strong>{companyContext.company_name}: </strong>}
+                  {companyContext.company_context || companyContext.industry_domain || companyContext.business_problem}
+                </small>
+              </div>
+            )}
+            <label>
+              <span className="field-label">Question generation</span>
+              <select
+                value={generationStrategy}
+                onChange={(event) => onGenerationStrategyChange(event.target.value as QuestionGenerationStrategy)}
+              >
+                <option value="llm">LLM only</option>
+                <option value="grounded">Grounded material</option>
+              </select>
+            </label>
+            {generationStrategy === 'grounded' && (
+              <>
+                <div className="grounding-action-row">
+                  <label className="file-control">
+                    <span>Upload verified material</span>
+                    <input multiple type="file" accept=".pdf,.txt,.md,.xml" onChange={onUploadGrounding} />
+                  </label>
+                  <select
+                    value={groundingIndexMode}
+                    onChange={(event) => onGroundingIndexModeChange(event.target.value as GroundingIndexMode)}
+                  >
+                    <option value="use_existing">Use existing index</option>
+                    <option value="update">Update index</option>
+                    <option value="recreate">Recreate index</option>
+                  </select>
+                  <button className="ghost-button" type="button" disabled={loading} onClick={onBuildGroundingIndex}>
+                    Prepare index
+                  </button>
+                </div>
+                <div className="grounding-action-row">
+                  <input
+                    placeholder="HTTPS link to verified material"
+                    value={groundingUrl}
+                    onChange={(event) => setGroundingUrl(event.target.value)}
+                  />
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    disabled={!groundingUrl.trim() || loading}
+                    onClick={() => {
+                      onAddGroundingUrl(groundingUrl.trim());
+                      setGroundingUrl('');
+                    }}
+                  >
+                    Add link
+                  </button>
+                </div>
+                <label>
+                  <span className="field-label">Optional grounding query</span>
+                  <input
+                    value={groundingQuery}
+                    onChange={(event) => onGroundingQueryChange(event.target.value)}
+                    placeholder="e.g. LangGraph state management and checkpoints"
+                  />
+                </label>
+                <div className="grounding-source-list">
+                  <strong>Selected grounding sources</strong>
+                  {groundingSources.map((source) => (
+                    <span key={source.filename}>
+                      {source.filename} {source.indexed ? `· ${source.chunk_count} chunks` : '· not indexed'}
+                    </span>
+                  ))}
+                  {!groundingSources.length && <small>No verified material uploaded.</small>}
+                </div>
+                <GroundingPipelineSteps sources={groundingSources} grounded />
+              </>
+            )}
+          </div>
+
+          <div className="section-intro">
+            <h3>Choose one skill to practice</h3>
+            <p>Preparation Mode focuses on one skill at a time for deeper practice.</p>
+          </div>
           <div className="auto-load-note">
             {skillOptionsStatus}
           </div>
@@ -275,33 +397,24 @@ export function InterviewPracticeView({
             <div className="skill-picker">
               {selectedSkillEntries.length > 0 && (
                 <div className="selected-skill-row">
-                  <span>Selected skills</span>
-                  <div className="selected-skill-list">
-                    {selectedSkillEntries.map(({ focus, skill }) => (
-                      <button
-                        className="selected-skill-pill"
-                        key={`${focus}-${skill}`}
-                        type="button"
-                        onClick={() => onSelectedFocusSkillToggle(focus, skill)}
-                      >
-                        {skill}
-                      </button>
-                    ))}
-                  </div>
+                  <span>Selected skill: <strong>{selectedSkill?.skill}</strong></span>
+                  <span>Source category: <strong>{selectedCategoryLabel?.toLowerCase()}</strong></span>
+                  <button
+                    className="selected-skill-pill"
+                    type="button"
+                    onClick={() => selectedSkill && onSelectedFocusSkillToggle(selectedSkill.focus, selectedSkill.skill)}
+                  >
+                    Clear selection
+                  </button>
                 </div>
               )}
               {availableSkillFocuses.map((option) => (
                 <div className="skill-group-block" key={option.value}>
                   <div className="skill-group-heading">
                     <span className={questionFocus.includes(option.value) ? 'active-skill-label' : ''}>{option.label}</span>
-                    {(selectedFocusSkills[option.value]?.length ?? 0) > 0 && (
-                      <button type="button" onClick={() => onSelectedFocusSkillsChange(option.value, [])}>
-                        Clear
-                      </button>
-                    )}
                   </div>
                   <select
-                    value=""
+                    value={selectedFocusSkills[option.value]?.[0] ?? ''}
                     onChange={(event) => {
                       if (event.target.value) {
                         onSelectedFocusSkillToggle(option.value, event.target.value);
@@ -310,34 +423,24 @@ export function InterviewPracticeView({
                   >
                     <option value="">Select skill</option>
                     {(skillGroups[option.value] ?? [])
-                      .filter((skill) => !(selectedFocusSkills[option.value] ?? []).includes(skill))
                       .map((skill) => (
                         <option key={skill} value={skill}>
                           {skill}
                         </option>
                       ))}
                   </select>
-                  {(selectedFocusSkills[option.value]?.length ?? 0) > 0 && (
-                    <div className="selected-skill-list compact-selected-list">
-                      {(selectedFocusSkills[option.value] ?? []).map((skill) => (
-                        <button
-                          className="selected-skill-pill"
-                          key={`${option.value}-${skill}`}
-                          type="button"
-                          onClick={() => onSelectedFocusSkillToggle(option.value, skill)}
-                        >
-                          {skill}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
           )}
 
-          <button className="primary-button action-gap" type="button" disabled={loading} onClick={onGeneratePlan}>
-            Generate interview plan
+          <button
+            className="primary-button action-gap"
+            type="button"
+            disabled={loading || selectedSkillEntries.length !== 1}
+            onClick={onGeneratePlan}
+          >
+            Generate Focused Practice Questions
           </button>
         </div>
       </section>

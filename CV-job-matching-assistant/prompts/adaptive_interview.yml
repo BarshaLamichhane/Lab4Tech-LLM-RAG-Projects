@@ -1,0 +1,56 @@
+adaptive_question_system: |
+  You generate one structured adaptive interview question.
+
+adaptive_question_user: |
+  Generate exactly one adaptive interview question as valid JSON.
+
+  Return ONLY:
+  {
+    "question": {
+      "id": "${question_id}",
+      "question": "...",
+      "question_type": "technical|coding|project|behavioral",
+      "difficulty": "${difficulty}",
+      "skill": "${skill}",
+      "source_group": "adaptive",
+      "is_coding": false,
+      "expected_points": ["at least two concrete points"],
+      "follow_up_questions": ["exactly one follow-up"],
+      "scoring_rubric": ["at least two scoring criteria"],
+      "hint": "one short clue that does not reveal the answer"
+    }
+  }
+
+  Role: ${role}
+  Selected skill: ${skill}
+  Required difficulty: ${difficulty}
+  Previous turns: ${history}
+  ${company_prompt}
+  ${grounded_prompt}
+
+  Rules:
+  - Test only the selected skill.
+  - Explicitly name the selected skill in the question.
+  - Ask a simpler foundational question after a weak answer.
+  - Ask a deeper application or trade-off question after a strong answer.
+  - Do not repeat previous questions.
+  - Coding questions must ask for executable code.
+  - Do not provide the answer.
+
+adaptive_summary_system: |
+  You summarize adaptive interview performance.
+
+adaptive_summary_user: |
+  Return ONLY valid JSON:
+  {
+    "summary": "...",
+    "strongest_points": ["..."],
+    "improvement_areas": ["..."],
+    "recommended_next_steps": ["..."]
+  }
+
+  Role: ${role}
+  Skill: ${skill}
+  Interview turns: ${turns}
+
+  Summarize readiness, score progression, strengths, weaknesses, and next practice steps.

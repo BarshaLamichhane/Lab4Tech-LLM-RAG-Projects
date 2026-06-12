@@ -88,6 +88,8 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export type InterviewEngine = 'mistral';
 export type PreparationLevel = 'beginner' | 'intermediate' | 'advanced';
 export type PreparationInterviewType = 'technical_theory' | 'coding' | 'project' | 'behavioral' | 'mixed';
+export type QuestionGenerationStrategy = 'llm' | 'grounded';
+export type GroundingIndexMode = 'use_existing' | 'recreate' | 'update';
 export type QuestionFocus =
   | 'all'
   | 'matched_strongly_required'
@@ -116,7 +118,7 @@ export interface InterviewQuestion {
   question_type: QuestionType;
   difficulty: Difficulty;
   skill: string | null;
-  source_group: QuestionFocus | null;
+  source_group: QuestionFocus | 'adaptive' | null;
   is_coding: boolean;
   criteria_source: 'llm' | 'template';
   expected_points: string[];
@@ -124,6 +126,17 @@ export interface InterviewQuestion {
   follow_up_questions: string[];
   scoring_rubric: string[];
   hint: string;
+  generation_strategy?: QuestionGenerationStrategy;
+  grounding_used?: string[];
+}
+
+export interface GroundingSource {
+  filename: string;
+  size: number;
+  hash: string;
+  indexed: boolean;
+  chunk_count: number;
+  indexed_at: string | null;
 }
 
 export interface LearningPathItem {
@@ -147,6 +160,8 @@ export interface InterviewPlan {
   learning_path: LearningPathItem[];
   preparation_level?: PreparationLevel;
   interview_type?: PreparationInterviewType;
+  use_company_context?: boolean;
+  company_context?: Record<string, string>;
 }
 
 export interface BuildInterviewPlanResponse {
@@ -198,6 +213,38 @@ export interface AnswerEvaluation {
   learning_recommendations: string[];
   expected_point_assessments: ExpectedPointAssessment[];
   score_breakdown: ScoreBreakdownItem[];
+}
+
+export interface AdaptiveInterviewTurn {
+  question: InterviewQuestion;
+  answer: string | null;
+  evaluation: AnswerEvaluation | null;
+}
+
+export interface AdaptiveInterviewState {
+  role: string;
+  selected_skills: string[];
+  level: PreparationLevel;
+  max_turns: number;
+  context: InterviewContext | null;
+  generation_strategy: QuestionGenerationStrategy;
+  grounding_query: string | null;
+  grounding_index_mode: GroundingIndexMode;
+  use_company_context: boolean;
+  company_context: Record<string, string> | null;
+  turns: AdaptiveInterviewTurn[];
+}
+
+export interface AdaptiveInterviewResponse {
+  state: AdaptiveInterviewState;
+  next_question: InterviewQuestion | null;
+  finished: boolean;
+  final_summary: {
+    summary?: unknown;
+    strongest_points?: unknown[];
+    improvement_areas?: unknown[];
+    recommended_next_steps?: unknown[];
+  } | null;
 }
 
 export interface ExpectedPointAssessment {

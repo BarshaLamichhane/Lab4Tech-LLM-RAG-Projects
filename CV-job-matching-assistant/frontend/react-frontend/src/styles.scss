@@ -920,6 +920,26 @@ select:focus {
   margin-top: 12px;
 }
 
+.section-intro {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+}
+
+.section-intro h3,
+.section-intro p {
+  margin: 0;
+}
+
+.section-intro h3 {
+  font-size: 1rem;
+}
+
+.section-intro p {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .auto-load-note {
   background: var(--accent-soft);
   border: 1px solid #bfdbfe;
@@ -937,6 +957,16 @@ select:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px;
+}
+
+.selected-skill-row {
+  align-items: start;
+  background: #f3f8ff;
+  border-color: #a9ccf7;
+}
+
+.selected-skill-row > span {
+  color: #40566f;
 }
 
 .selected-skill-row > span,
@@ -1256,6 +1286,190 @@ select:focus {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.grounding-controls {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.company-context-control {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #b8d4f8;
+  border-radius: 6px;
+  background: #f3f8ff;
+}
+
+.company-context-control small {
+  color: #40566f;
+  line-height: 1.45;
+}
+
+.adaptive-flow {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.adaptive-flow div {
+  align-items: center;
+  background: #f3f8ff;
+  border: 1px solid #b8d4f8;
+  border-radius: 6px;
+  display: flex;
+  gap: 9px;
+  padding: 10px;
+}
+
+.adaptive-flow strong {
+  align-items: center;
+  background: #1769aa;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  flex: 0 0 26px;
+  height: 26px;
+  justify-content: center;
+}
+
+.adaptive-flow span {
+  color: #40566f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.adaptive-config {
+  align-content: start;
+  display: grid;
+  gap: 14px;
+}
+
+.adaptive-session-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.7fr);
+}
+
+.adaptive-complete {
+  display: grid;
+  gap: 18px;
+}
+
+.adaptive-summary-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.adaptive-summary-grid > div {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.adaptive-result-row {
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px 0;
+}
+
+.adaptive-result-row div {
+  display: grid;
+  gap: 4px;
+}
+
+.adaptive-result-row span,
+.adaptive-result-row p {
+  color: var(--muted);
+}
+
+.adaptive-result-row p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.adaptive-score {
+  color: #1769aa;
+  display: block;
+  font-size: 2rem;
+  margin: 12px 0;
+}
+
+.adaptive-turn {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.final-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.final-summary span {
+  background: #f3f8ff;
+  border-left: 3px solid #1769aa;
+  padding: 8px 10px;
+}
+
+.grounding-action-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.grounding-source-list {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.grounding-source-list span,
+.grounding-source-list small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.grounding-learning-steps {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grounding-learning-steps div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.grounding-learning-steps span {
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.grounding-learning-steps small {
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .practice-setup-actions,
@@ -1605,6 +1819,7 @@ pre {
   .input-grid,
   .detail-grid,
   .dashboard-grid,
+  .grounding-action-row,
   .result-grid,
   .chart-grid,
   .settings-grid,
@@ -1635,6 +1850,10 @@ pre {
 
   .project-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .grounding-learning-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .interview-config-grid {

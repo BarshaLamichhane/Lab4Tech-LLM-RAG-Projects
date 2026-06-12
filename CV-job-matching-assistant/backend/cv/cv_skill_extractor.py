@@ -9,6 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+from backend.job_description.job_profile_catalog import profile_paths
 
 try:
     from backend.cv.cv_analyzer import analyze_cv
@@ -136,7 +137,7 @@ def load_job_profiles(data_dir: Path = DEFAULT_JOB_SKILLS_DIR) -> list[dict]:
         return []
 
     job_profiles = []
-    for file_path in sorted(data_dir.glob("*.json")):
+    for file_path in profile_paths(data_dir):
         with file_path.open(encoding="utf-8") as file:
             job_profiles.append(json.load(file))
 

@@ -35,4 +35,5 @@ uploads/
 *.xlsx
 *.xls
 *.csv
-CV-job-matching-assistant/data/extracted_skills_mistral-large-latest/
+CV-job-matching-assistant/data/extracted_skills_mistral-large-latest/*
+!CV-job-matching-assistant/data/extracted_skills_mistral-large-latest/index.json

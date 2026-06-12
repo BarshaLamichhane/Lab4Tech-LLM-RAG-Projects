@@ -1,5 +1,7 @@
 import type {
   AnswerEvaluation,
+  AdaptiveInterviewResponse,
+  AdaptiveInterviewState,
   AppSettings,
   AuthUser,
   CodeRunResponse,
@@ -7,6 +9,8 @@ import type {
   InterviewContext,
   InterviewEngine,
   InterviewQuestion,
+  GroundingIndexMode,
+  GroundingSource,
   InterviewPracticeSession,
   InterviewPracticeSessionPayload,
   InterviewProgressDashboard,
@@ -14,6 +18,7 @@ import type {
   MatchResponse,
   PreparationInterviewResponse,
   QuestionFocus,
+  QuestionGenerationStrategy,
   PreparationInterviewType,
   PreparationLevel,
   SkillWeights,
@@ -231,6 +236,11 @@ export function generatePreparationInterview(
   questionCount: number,
   level: PreparationLevel,
   interviewType: PreparationInterviewType,
+  generationStrategy: QuestionGenerationStrategy = 'llm',
+  groundingQuery?: string,
+  groundingIndexMode: GroundingIndexMode = 'use_existing',
+  useCompanyContext = false,
+  companyContext?: Record<string, string>,
 ): Promise<PreparationInterviewResponse> {
   return requestJson<PreparationInterviewResponse>('/api/interview/preparation', {
     method: 'POST',
@@ -241,7 +251,45 @@ export function generatePreparationInterview(
       question_count: questionCount,
       level,
       interview_type: interviewType,
+      generation_strategy: generationStrategy,
+      grounding_query: groundingQuery || null,
+      grounding_index_mode: groundingIndexMode,
+      use_company_context: useCompanyContext,
+      company_context: companyContext || null,
     }),
+  });
+}
+
+export function getGroundingSources(): Promise<GroundingSource[]> {
+  return requestJson<GroundingSource[]>('/api/interview/grounding/sources');
+}
+
+export async function uploadGroundingDocuments(files: FileList): Promise<GroundingSource[]> {
+  const body = new FormData();
+  Array.from(files).forEach((file) => body.append('files', file));
+  const response = await fetch(`${API_BASE_URL}/api/interview/grounding/upload`, {
+    method: 'POST',
+    credentials: 'include',
+    body,
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(errorBody?.detail ?? `Upload failed with ${response.status}`);
+  }
+  return ((await response.json()) as { sources: GroundingSource[] }).sources;
+}
+
+export function uploadGroundingUrl(url: string): Promise<{ sources: GroundingSource[] }> {
+  return requestJson('/api/interview/grounding/url', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
+}
+
+export function buildGroundingIndex(mode: GroundingIndexMode): Promise<{ sources: GroundingSource[]; indexed_chunks: number | null }> {
+  return requestJson('/api/interview/grounding/index', {
+    method: 'POST',
+    body: JSON.stringify({ mode }),
   });
 }
 
@@ -253,6 +301,8 @@ export function regeneratePreparationQuestion(
   interviewType: PreparationInterviewType,
   questionId: string,
   existingQuestions: InterviewQuestion[],
+  useCompanyContext = false,
+  companyContext?: Record<string, string>,
 ): Promise<InterviewQuestion> {
   return requestJson<InterviewQuestion>('/api/interview/preparation/regenerate', {
     method: 'POST',
@@ -264,6 +314,8 @@ export function regeneratePreparationQuestion(
       interview_type: interviewType,
       question_id: questionId,
       existing_questions: existingQuestions,
+      use_company_context: useCompanyContext,
+      company_context: companyContext || null,
     }),
   });
 }
@@ -321,5 +373,44 @@ export function runPythonCode(
       stdin,
       timeout_seconds: timeoutSeconds,
     }),
+  });
+}
+
+export function startAdaptiveInterview(options: {
+  role: string;
+  selectedSkill: string;
+  level: PreparationLevel;
+  maxTurns: number;
+  context: InterviewContext;
+  generationStrategy: QuestionGenerationStrategy;
+  groundingQuery?: string;
+  groundingIndexMode: GroundingIndexMode;
+  useCompanyContext: boolean;
+  companyContext?: Record<string, string>;
+}): Promise<AdaptiveInterviewResponse> {
+  return requestJson<AdaptiveInterviewResponse>('/api/interview/adaptive/start', {
+    method: 'POST',
+    body: JSON.stringify({
+      role: options.role,
+      selected_skills: [options.selectedSkill],
+      level: options.level,
+      max_turns: options.maxTurns,
+      context: options.context,
+      generation_strategy: options.generationStrategy,
+      grounding_query: options.groundingQuery || null,
+      grounding_index_mode: options.groundingIndexMode,
+      use_company_context: options.useCompanyContext,
+      company_context: options.companyContext || null,
+    }),
+  });
+}
+
+export function submitAdaptiveAnswer(
+  state: AdaptiveInterviewState,
+  answer: string,
+): Promise<AdaptiveInterviewResponse> {
+  return requestJson<AdaptiveInterviewResponse>('/api/interview/adaptive/answer', {
+    method: 'POST',
+    body: JSON.stringify({ state, answer }),
   });
 }

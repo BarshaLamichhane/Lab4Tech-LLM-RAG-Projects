@@ -49,6 +49,9 @@ secrets/
 # Vector database / embeddings
 vectorstore/
 faiss_index/
+data/grounding/documents/
+data/grounding/faiss_index/
+data/grounding/document_registry.json
 
 # Large model files
 models/
@@ -68,7 +71,8 @@ uploads/
 *.csv
 
 # Generated local data / exports
-data/extracted_skills_mistral-large-latest/
+data/extracted_skills_mistral-large-latest/*
+!data/extracted_skills_mistral-large-latest/index.json
 data/app_settings.json
 data/user_sessions.json
 cv-match-result.json
