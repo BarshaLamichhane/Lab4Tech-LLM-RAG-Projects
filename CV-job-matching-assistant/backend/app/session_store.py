@@ -136,6 +136,14 @@ def load_interview_sessions(username: str) -> list[dict]:
     ]
 
 
+def load_adaptive_interview_sessions(username: str) -> list[dict]:
+    return [
+        session
+        for session in load_user_sessions(username)
+        if session["session_type"] == "adaptive_interview"
+    ]
+
+
 def load_interview_session(username: str, session_id: str) -> dict:
     initialize_session_database()
     with _connection() as connection:

@@ -48,6 +48,7 @@ export function HomePage() {
           <div className="home-actions">
             <Link to="/interview-practice">Preparation mode</Link>
             <Link to="/adaptive-interview">Adaptive interview</Link>
+            <Link to="/adaptive-progress">Adaptive progress</Link>
           </div>
         </article>
       </section>

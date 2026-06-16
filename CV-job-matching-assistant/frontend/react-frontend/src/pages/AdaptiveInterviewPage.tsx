@@ -2,17 +2,22 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
 import {
   buildInterviewContext,
+  buildGroundingIndex,
+  getGroundingSources,
   getRoles,
   startAdaptiveInterview,
   submitAdaptiveAnswer,
+  uploadGroundingDocuments,
+  uploadGroundingUrl,
   uploadText,
 } from '../api';
 import type {
   AdaptiveInterviewResponse,
+  AdaptiveStartFocus,
   GroundingIndexMode,
+  GroundingSource,
   InterviewContext,
   PreparationLevel,
-  QuestionFocus,
   QuestionGenerationStrategy,
 } from '../types';
 import { errorMessage } from '../ui';
@@ -23,13 +28,13 @@ export function AdaptiveInterviewPage() {
   const [roles, setRoles] = useState<string[]>([]);
   const [role, setRole] = useState('');
   const [context, setContext] = useState<InterviewContext | null>(null);
-  const [selectedFocus, setSelectedFocus] = useState<QuestionFocus | null>(null);
-  const [selectedSkill, setSelectedSkill] = useState('');
   const [level, setLevel] = useState<PreparationLevel>('intermediate');
   const [maxTurns, setMaxTurns] = useState(5);
+  const [startFocus, setStartFocus] = useState<AdaptiveStartFocus>('weak');
   const [generationStrategy, setGenerationStrategy] = useState<QuestionGenerationStrategy>('llm');
   const [groundingIndexMode, setGroundingIndexMode] = useState<GroundingIndexMode>('use_existing');
   const [groundingQuery, setGroundingQuery] = useState('');
+  const [groundingSources, setGroundingSources] = useState<GroundingSource[]>([]);
   const [useCompanyContext, setUseCompanyContext] = useState(false);
   const [session, setSession] = useState<AdaptiveInterviewResponse | null>(null);
   const [answer, setAnswer] = useState('');
@@ -44,6 +49,7 @@ export function AdaptiveInterviewPage() {
         setRole(loaded[0] ?? '');
       })
       .catch((caught) => setError(errorMessage(caught)));
+    refreshGroundingSources();
   }, []);
 
   async function uploadCv(event: ChangeEvent<HTMLInputElement>) {
@@ -60,8 +66,6 @@ export function AdaptiveInterviewPage() {
     if (!cvText || !targetRole) return;
     await runTask('Comparing CV and role', async () => {
       setContext(await buildInterviewContext(cvText, { targetRole }));
-      setSelectedFocus(null);
-      setSelectedSkill('');
       setSession(null);
     });
   }
@@ -69,25 +73,18 @@ export function AdaptiveInterviewPage() {
   async function changeRole(nextRole: string) {
     setRole(nextRole);
     setContext(null);
-    setSelectedSkill('');
-    setSelectedFocus(null);
     setSession(null);
     await loadContext(cvTextRef.current?.value.trim() ?? '', nextRole);
   }
 
-  function selectSkill(focus: QuestionFocus, skill: string) {
-    setSelectedFocus(skill ? focus : null);
-    setSelectedSkill(skill);
-  }
-
   async function start() {
-    if (!context || !selectedSkill) return;
+    if (!context) return;
     await runTask('Starting adaptive interview', async () => {
       setSession(await startAdaptiveInterview({
         role,
-        selectedSkill,
         level,
         maxTurns,
+        startFocus,
         context,
         generationStrategy,
         groundingQuery,
@@ -120,6 +117,37 @@ export function AdaptiveInterviewPage() {
     setCode('');
   }
 
+  async function refreshGroundingSources() {
+    try {
+      setGroundingSources(await getGroundingSources());
+    } catch (caught) {
+      setError(errorMessage(caught));
+    }
+  }
+
+  async function uploadGroundingFiles(event: ChangeEvent<HTMLInputElement>) {
+    if (!event.target.files?.length) return;
+    await runTask('Uploading grounding material', async () => {
+      setGroundingSources(await uploadGroundingDocuments(event.target.files!));
+      setGroundingIndexMode('update');
+    });
+  }
+
+  async function addGroundingUrl(url: string) {
+    await runTask('Adding online grounding material', async () => {
+      const result = await uploadGroundingUrl(url);
+      setGroundingSources(result.sources);
+      setGroundingIndexMode('update');
+    });
+  }
+
+  async function prepareGroundingIndex() {
+    await runTask('Preparing grounding index', async () => {
+      const result = await buildGroundingIndex(groundingIndexMode);
+      setGroundingSources(result.sources);
+    });
+  }
+
   async function runTask(label: string, task: () => Promise<void>) {
     setError('');
     setLoadingLabel(label);
@@ -142,10 +170,13 @@ export function AdaptiveInterviewPage() {
       generationStrategy={generationStrategy}
       groundingIndexMode={groundingIndexMode}
       groundingQuery={groundingQuery}
+      groundingSources={groundingSources}
       level={level}
       loadingLabel={loadingLabel}
       maxTurns={maxTurns}
       onAnswerChange={setAnswer}
+      onAddGroundingUrl={addGroundingUrl}
+      onBuildGroundingIndex={prepareGroundingIndex}
       onCodeChange={setCode}
       onCvBlur={() => loadContext()}
       onGenerationStrategyChange={setGenerationStrategy}
@@ -153,18 +184,18 @@ export function AdaptiveInterviewPage() {
       onGroundingQueryChange={setGroundingQuery}
       onLevelChange={setLevel}
       onMaxTurnsChange={setMaxTurns}
+      onStartFocusChange={setStartFocus}
       onRoleChange={changeRole}
       onRestart={restart}
-      onSelectSkill={selectSkill}
       onStart={start}
       onSubmit={submit}
       onUploadCv={uploadCv}
+      onUploadGrounding={uploadGroundingFiles}
       onUseCompanyContextChange={setUseCompanyContext}
       role={role}
       roles={roles}
-      selectedFocus={selectedFocus}
-      selectedSkill={selectedSkill}
       session={session}
+      startFocus={startFocus}
       useCompanyContext={useCompanyContext}
       companyContext={companyContextFromProfile(context?.job_profile)}
     />

@@ -18,6 +18,7 @@ PreparationInterviewType = Literal[
 ]
 QuestionGenerationStrategy = Literal["llm", "grounded"]
 GroundingIndexMode = Literal["use_existing", "recreate", "update"]
+AdaptiveStartFocus = Literal["weak", "strong"]
 QuestionFocus = Literal[
     "all",
     "matched_strongly_required",
@@ -181,9 +182,10 @@ class QuestionQualityReportRequest(BaseModel):
 
 class AdaptiveInterviewStartRequest(BaseModel):
     role: str
-    selected_skills: list[str]
+    selected_skills: list[str] = Field(default_factory=list)
     level: PreparationLevel = "intermediate"
     max_turns: int = Field(default=5, ge=2, le=10)
+    start_focus: AdaptiveStartFocus = "weak"
     context: InterviewContext | None = None
     generation_strategy: QuestionGenerationStrategy = "llm"
     grounding_query: str | None = None
@@ -192,10 +194,34 @@ class AdaptiveInterviewStartRequest(BaseModel):
     company_context: dict[str, str] | None = None
 
 
+class AdaptiveSkillProfile(BaseModel):
+    skill: str
+    source_group: str
+    priority: float = 0
+    cv_status: Literal["matched", "missing", "unknown"] = "unknown"
+    job_importance: str = ""
+    estimated_score: float = 5.0
+    attempts: int = 0
+    average_score: float | None = None
+    last_score: float | None = None
+    status: Literal["weak", "developing", "strong"] = "developing"
+
+
+class AdaptiveLearnerProfile(BaseModel):
+    goal_role: str
+    readiness_score: float = 0
+    skills: list[AdaptiveSkillProfile] = Field(default_factory=list)
+    strongest_skills: list[str] = Field(default_factory=list)
+    weakest_skills: list[str] = Field(default_factory=list)
+    next_focus: str | None = None
+
+
 class AdaptiveInterviewTurn(BaseModel):
     question: InterviewQuestion
     answer: str | None = None
     evaluation: AnswerEvaluation | None = None
+    selected_skill: str | None = None
+    decision_reason: str = ""
 
 
 class AdaptiveInterviewState(BaseModel):
@@ -203,12 +229,16 @@ class AdaptiveInterviewState(BaseModel):
     selected_skills: list[str]
     level: PreparationLevel
     max_turns: int = Field(default=5, ge=2, le=10)
+    start_focus: AdaptiveStartFocus = "weak"
     context: InterviewContext | None = None
     generation_strategy: QuestionGenerationStrategy = "llm"
     grounding_query: str | None = None
     grounding_index_mode: GroundingIndexMode = "use_existing"
     use_company_context: bool = False
     company_context: dict[str, str] | None = None
+    learner_profile: AdaptiveLearnerProfile | None = None
+    current_skill: str | None = None
+    current_decision_reason: str = ""
     turns: list[AdaptiveInterviewTurn] = Field(default_factory=list)
 
 

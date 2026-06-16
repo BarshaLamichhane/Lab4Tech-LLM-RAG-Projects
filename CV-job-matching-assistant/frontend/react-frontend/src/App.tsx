@@ -39,7 +39,8 @@ export function App() {
             <div className="nav-dropdown">
               <NavLink to="/interview-practice">Preparation mode</NavLink>
               <NavLink to="/adaptive-interview">Adaptive interview</NavLink>
-              <NavLink to="/interview-progress">Progress dashboard</NavLink>
+              <NavLink to="/interview-progress">Preparation progress</NavLink>
+              <NavLink to="/adaptive-progress">Adaptive progress</NavLink>
             </div>
           </div>
           <NavLink to="/sessions">Sessions</NavLink>

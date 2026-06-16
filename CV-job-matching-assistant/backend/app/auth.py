@@ -14,6 +14,7 @@ import jwt
 from fastapi import Header, HTTPException, Request
 
 from backend.app.config import CONFIG
+from backend.app.llm_context import set_current_llm_username
 
 
 PASSWORD_ITERATIONS = 600_000
@@ -119,12 +120,14 @@ def authenticate(username: str, password: str, client_key: str) -> CurrentUser:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     _clear_attempts(client_key)
-    return CurrentUser(
+    user = CurrentUser(
         id=row["id"],
         username=row["username"],
         role=row["role"],
         token_version=row["token_version"],
     )
+    set_current_llm_username(user.username)
+    return user
 
 
 def create_access_token(user: CurrentUser) -> str:

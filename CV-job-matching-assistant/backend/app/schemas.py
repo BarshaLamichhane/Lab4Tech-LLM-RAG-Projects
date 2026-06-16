@@ -28,6 +28,21 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+class UserLLMSettingsResponse(BaseModel):
+    provider: Literal["mistral", "openai"] = "mistral"
+    model_name: str
+    has_api_key: bool = False
+    api_key_preview: str = ""
+    updated_at: str | None = None
+
+
+class UserLLMSettingsRequest(BaseModel):
+    provider: Literal["mistral", "openai"] = "mistral"
+    model_name: str = Field(default="mistral-large-latest", min_length=1, max_length=120)
+    api_key: str | None = Field(default=None, max_length=500)
+    clear_api_key: bool = False
+
+
 class CreateUserRequest(BaseModel):
     username: str = Field(min_length=3, max_length=80)
     password: str = Field(min_length=12)

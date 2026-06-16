@@ -4,15 +4,12 @@ import ast
 import json
 import re
 import time
+from types import SimpleNamespace
 
 from backend.app.config import CONFIG
 from backend.interview.code_runner import run_python_code
 from backend.interview.grounding_retriever import retrieve_grounding_context
 from backend.interview.python_test_case_templates import validate_python_test_cases
-from backend.job_description.job_description_cleaner_mistral_api import (
-    MISTRAL_API_MODEL_NAME,
-    get_mistral_client,
-)
 from backend.interview.schemas import (
     AnswerEvaluation,
     CodeRunRequest,
@@ -293,6 +290,8 @@ Rules:
                 grounding_used=grounding_used,
                 score_cap=score_cap,
             )
+            if _substantive_answer(answer) and _looks_like_no_attempt_evaluation(evaluation):
+                raise ValueError("Mistral treated a substantive answer as no attempt")
             return evaluation, attempt_prompt, raw_response
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             validation_error = exc
@@ -370,6 +369,33 @@ def _validated_evaluation(
         "grounding_used": grounding_used or [],
     }
     return AnswerEvaluation(**normalized_payload)
+
+
+def _substantive_answer(answer: str) -> bool:
+    compact = re.sub(r"\s+", " ", answer).strip()
+    words = re.findall(r"\b\w+\b", compact)
+    return len(compact) >= 60 and len(words) >= 8
+
+
+def _looks_like_no_attempt_evaluation(evaluation: AnswerEvaluation) -> bool:
+    if evaluation.score > 0:
+        return False
+    text = " ".join(
+        [
+            evaluation.feedback,
+            *evaluation.weaknesses,
+            *[item.explanation for item in evaluation.score_breakdown],
+            *[item.explanation for item in evaluation.expected_point_assessments],
+        ]
+    ).casefold()
+    no_attempt_terms = [
+        "no answer",
+        "no attempt",
+        "did not attempt",
+        "answer was not provided",
+        "candidate did not provide",
+    ]
+    return any(term in text for term in no_attempt_terms)
 
 
 def _strategy_prompt_context(
@@ -617,18 +643,15 @@ def _exclude_skills(values: list[str], excluded_values: list[str]) -> list[str]:
 
 
 def _complete_mistral_chat(system_prompt: str, user_prompt: str, temperature: float):
+    from backend.app.llm_client import complete_json_chat
+
     last_error = None
 
     for _ in range(2):
         try:
-            return get_mistral_client().chat.complete(
-                model=MISTRAL_API_MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-                response_format={"type": "json_object"},
+            response = complete_json_chat(system_prompt, user_prompt, temperature)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=response.content))]
             )
         except Exception as exc:
             last_error = exc

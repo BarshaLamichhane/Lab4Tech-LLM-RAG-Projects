@@ -1,3 +1,5 @@
+import json
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -6,6 +8,7 @@ from backend.interview.interview_assistant import (
     NON_CODING_SCORE_BUDGET,
     _run_python_test_evaluation,
     _validated_evaluation,
+    evaluate_answer_with_audit,
     select_evaluation_strategy,
 )
 from backend.interview.grounding_retriever import retrieve_grounding_context
@@ -130,6 +133,32 @@ class PythonTestBasedScoringTests(TestCase):
             round(sum(item.awarded_score for item in evaluation.score_breakdown), 1),
         )
         self.assertEqual(evaluation.evaluation_strategy, "test_based")
+
+
+class EvaluationValidationTests(TestCase):
+    @patch("backend.interview.interview_assistant._complete_mistral_chat")
+    def test_retries_when_substantive_answer_is_marked_as_no_attempt(self, complete):
+        no_attempt = evaluation_payload(0.0, 0.0)
+        no_attempt["feedback"] = "The candidate did not attempt to answer the question."
+        for item in no_attempt["score_breakdown"]:
+            item["explanation"] = "No answer was provided."
+        strong = evaluation_payload(0.8, 0.8)
+        complete.side_effect = [
+            SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(no_attempt)))]),
+            SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(strong)))]),
+        ]
+
+        evaluation, _, _ = evaluate_answer_with_audit(
+            question(skill="Python", is_coding=False, question_type="technical"),
+            (
+                "json.load reads JSON from a file-like object, while json.loads parses JSON "
+                "from a string returned by an API response. I would use loads for response.text "
+                "and load when reading a local data.json file."
+            ),
+        )
+
+        self.assertEqual(complete.call_count, 2)
+        self.assertGreater(evaluation.score, 0)
 
 
 class GroundedScoringTests(TestCase):

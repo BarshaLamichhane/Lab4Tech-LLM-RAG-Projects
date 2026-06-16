@@ -1,0 +1,43 @@
+About this offer
+The HEIG-VD is calling for a competition for the position of
+
+
+
+PhD student in Computer Science
+, HES relief assistant
+
+
+
+You will participate in research on distributed systems for agentic AI (compound AI systems). Unlike traditional systems, an agent remains inactive most of the time before triggering unpredictable computing spikes, meaning that no model yet allows for reliable cost prediction. The thesis may explore the design of agentic runtimes, cost modeling, and/or capacity planning.
+
+Attached to the ICT (Information and Communication Technologies) department of HEIG-VD, you will conduct this research within the IICT (Institute of Information and Communication Technologies), in collaboration with the University of Fribourg. The exact scope will be defined with the selected candidate based on their motivations and ambitions.
+
+MAIN MISSIONS
+50% of your workload will be dedicated to completing a doctoral thesis, under the joint supervision of a professor from a University of Applied Sciences and a professor from the University of Fribourg.
+The remaining percentage will be reserved for teaching duties and participation in research within the Software Engineering Skills Thematic Group
+DESIRED PROFILE
+Master's degree in computer science from a university of applied sciences or equivalent qualification
+Strong interest in applied research, distributed systems, agentic AI (LLMs, agents, compound AI systems) and observability
+Strong knowledge of cloud architectures, container orchestration, actor systems, and distributed runtimes
+Proven mastery of one or more programming languages ​​(C, C++, Rust, Golang, Java, Python, TypeScript) and advanced experience in AI-assisted development
+Curiosity, a passion for research, and a desire to explore a rapidly emerging field
+Experimental rigor and systematic approach: hypothesis, measurement, validation
+Analytical mind, ability to abstract and model
+Autonomy, clear communication, and a taste for collaboration with academic and industrial partners
+Proficiency in English and sufficient knowledge of French to communicate with students
+Activity rate : 100%
+
+Start date : From September 2026 or as agreed
+
+Commitment period: 1 year, renewable, maximum 5 years
+
+For further information , please contact : Prof. Bertil Chapuis ( Email address )
+
+The complete application package: Cover letter, CV with copies of diplomas, work certificates, transcripts, summary of master's thesis and other publications, and any letters of recommendation. Applications must be submitted via Jobup only.
+
+Application deadline: July 14, 2026
+
+The University of Applied Sciences and Arts of Western Switzerland ( www.heig-vd.ch)  ) offers bachelor and master HES courses in engineering and business economics as well as postgraduate courses.
+
+With over 2,500 students, it is the largest school within the University of Applied Sciences and Arts Western Switzerland ( www.hes-so.ch).  ). Its applied research and development activities are carried out within its institutes, centers and groups.
+

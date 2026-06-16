@@ -5,6 +5,7 @@ import re
 import time
 from pathlib import Path
 from string import Template
+from types import SimpleNamespace
 
 from pydantic import ValidationError
 import yaml
@@ -22,10 +23,6 @@ from backend.interview.schemas import (
     PreparationInterviewType,
     PreparationLevel,
     QuestionGenerationStrategy,
-)
-from backend.job_description.job_description_cleaner_mistral_api import (
-    MISTRAL_API_MODEL_NAME,
-    get_mistral_client,
 )
 from backend.matching.skill_matching_engine import skills_match
 
@@ -388,17 +385,14 @@ def _prompt(name: str) -> str:
 
 
 def _complete_mistral_chat(system_prompt: str, user_prompt: str, temperature: float):
+    from backend.app.llm_client import complete_json_chat
+
     last_error: Exception | None = None
     for _ in range(2):
         try:
-            return get_mistral_client().chat.complete(
-                model=MISTRAL_API_MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-                response_format={"type": "json_object"},
+            response = complete_json_chat(system_prompt, user_prompt, temperature)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=response.content))]
             )
         except Exception as exc:
             last_error = exc

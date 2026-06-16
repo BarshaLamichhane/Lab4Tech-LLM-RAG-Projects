@@ -39,6 +39,7 @@ class AppConfig:
     cookie_secure: bool
     cookie_samesite: str
     cors_allowed_origins: list[str]
+    cors_allow_origin_regex: str | None
     allowed_hosts: list[str]
     api_docs_enabled: bool
     code_execution_enabled: bool
@@ -87,6 +88,11 @@ def load_config() -> AppConfig:
         cookie_secure=_boolean("COOKIE_SECURE", production),
         cookie_samesite=cookie_samesite,
         cors_allowed_origins=cors_allowed_origins,
+        cors_allow_origin_regex=(
+            None
+            if production
+            else r"^http://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$"
+        ),
         allowed_hosts=allowed_hosts,
         api_docs_enabled=_boolean("API_DOCS_ENABLED", not production),
         code_execution_enabled=_boolean("CODE_EXECUTION_ENABLED", not production),

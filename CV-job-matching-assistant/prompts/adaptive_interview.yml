@@ -22,15 +22,17 @@ adaptive_question_user: |
   }
 
   Role: ${role}
-  Selected skill: ${skill}
+  Current adaptive skill: ${skill}
   Required difficulty: ${difficulty}
+  Learner profile: ${learner_profile}
+  Why this skill was chosen: ${decision_reason}
   Previous turns: ${history}
   ${company_prompt}
   ${grounded_prompt}
 
   Rules:
-  - Test only the selected skill.
-  - Explicitly name the selected skill in the question.
+  - Test only the current adaptive skill.
+  - Explicitly name the current adaptive skill in the question.
   - Ask a simpler foundational question after a weak answer.
   - Ask a deeper application or trade-off question after a strong answer.
   - Do not repeat previous questions.
@@ -50,7 +52,7 @@ adaptive_summary_user: |
   }
 
   Role: ${role}
-  Skill: ${skill}
+  Learner profile: ${learner_profile}
   Interview turns: ${turns}
 
-  Summarize readiness, score progression, strengths, weaknesses, and next practice steps.
+  Summarize readiness, score progression, strongest skills, weakest skills, recommended learning path, and the next adaptive session plan.

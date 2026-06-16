@@ -60,6 +60,14 @@ export interface AppSettings {
   broad_skill_aliases: Record<string, string[]>;
 }
 
+export interface UserLLMSettings {
+  provider: 'mistral' | 'openai';
+  model_name: string;
+  has_api_key: boolean;
+  api_key_preview: string;
+  updated_at: string | null;
+}
+
 export interface UserSession {
   id: string;
   username: string;
@@ -90,6 +98,7 @@ export type PreparationLevel = 'beginner' | 'intermediate' | 'advanced';
 export type PreparationInterviewType = 'technical_theory' | 'coding' | 'project' | 'behavioral' | 'mixed';
 export type QuestionGenerationStrategy = 'llm' | 'grounded';
 export type GroundingIndexMode = 'use_existing' | 'recreate' | 'update';
+export type AdaptiveStartFocus = 'weak' | 'strong';
 export type QuestionFocus =
   | 'all'
   | 'matched_strongly_required'
@@ -219,6 +228,30 @@ export interface AdaptiveInterviewTurn {
   question: InterviewQuestion;
   answer: string | null;
   evaluation: AnswerEvaluation | null;
+  selected_skill: string | null;
+  decision_reason: string;
+}
+
+export interface AdaptiveSkillProfile {
+  skill: string;
+  source_group: string;
+  priority: number;
+  cv_status: 'matched' | 'missing' | 'unknown';
+  job_importance: string;
+  estimated_score: number;
+  attempts: number;
+  average_score: number | null;
+  last_score: number | null;
+  status: 'weak' | 'developing' | 'strong';
+}
+
+export interface AdaptiveLearnerProfile {
+  goal_role: string;
+  readiness_score: number;
+  skills: AdaptiveSkillProfile[];
+  strongest_skills: string[];
+  weakest_skills: string[];
+  next_focus: string | null;
 }
 
 export interface AdaptiveInterviewState {
@@ -226,12 +259,16 @@ export interface AdaptiveInterviewState {
   selected_skills: string[];
   level: PreparationLevel;
   max_turns: number;
+  start_focus: AdaptiveStartFocus;
   context: InterviewContext | null;
   generation_strategy: QuestionGenerationStrategy;
   grounding_query: string | null;
   grounding_index_mode: GroundingIndexMode;
   use_company_context: boolean;
   company_context: Record<string, string> | null;
+  learner_profile: AdaptiveLearnerProfile | null;
+  current_skill: string | null;
+  current_decision_reason: string;
   turns: AdaptiveInterviewTurn[];
 }
 
@@ -272,5 +309,27 @@ export interface InterviewProgressDashboard {
   strongest_topics: { skill: string; average_score: number; attempts: number }[];
   weakest_topics: { skill: string; average_score: number; attempts: number }[];
   retry_questions: { session_id: string; question_id: string; question: string; skill: string; score: number }[];
+  recommended_next_session: { skills: string[]; reason: string };
+}
+
+export interface AdaptiveProgressDashboard {
+  sessions: number;
+  answered_questions: number;
+  overall_average: number;
+  latest_readiness_score: number;
+  average_by_skill: { skill: string; average_score: number; attempts: number }[];
+  strongest_skills: string[];
+  weakest_skills: string[];
+  skill_status_counts: { weak: number; developing: number; strong: number };
+  readiness_trend: { date: string; role: string; readiness_score: number; average_score: number }[];
+  recent_reports: {
+    session_id: string;
+    title: string;
+    date: string;
+    role: string;
+    average_score: number;
+    readiness_score: number;
+    summary: string;
+  }[];
   recommended_next_session: { skills: string[]; reason: string };
 }

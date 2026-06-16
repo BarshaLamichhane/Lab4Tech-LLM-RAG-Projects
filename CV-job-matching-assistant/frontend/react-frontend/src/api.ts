@@ -1,5 +1,6 @@
 import type {
   AnswerEvaluation,
+  AdaptiveProgressDashboard,
   AdaptiveInterviewResponse,
   AdaptiveInterviewState,
   AppSettings,
@@ -22,6 +23,7 @@ import type {
   PreparationInterviewType,
   PreparationLevel,
   SkillWeights,
+  UserLLMSettings,
   UserSession,
 } from './types';
 
@@ -79,6 +81,27 @@ export function changePassword(currentPassword: string, newPassword: string): Pr
   });
 }
 
+export function getUserLLMSettings(): Promise<UserLLMSettings> {
+  return requestJson<UserLLMSettings>('/api/account/llm-settings');
+}
+
+export function updateUserLLMSettings(options: {
+  provider: 'mistral' | 'openai';
+  modelName: string;
+  apiKey?: string;
+  clearApiKey?: boolean;
+}): Promise<UserLLMSettings> {
+  return requestJson<UserLLMSettings>('/api/account/llm-settings', {
+    method: 'PUT',
+    body: JSON.stringify({
+      provider: options.provider,
+      model_name: options.modelName,
+      api_key: options.apiKey || null,
+      clear_api_key: Boolean(options.clearApiKey),
+    }),
+  });
+}
+
 export function getAdminSettings(): Promise<AppSettings> {
   return requestJson<AppSettings>('/api/admin/settings');
 }
@@ -111,6 +134,10 @@ export function getInterviewSessions(): Promise<InterviewPracticeSession[]> {
 
 export function getInterviewProgress(): Promise<InterviewProgressDashboard> {
   return requestJson<InterviewProgressDashboard>('/api/interview/progress');
+}
+
+export function getAdaptiveProgress(): Promise<AdaptiveProgressDashboard> {
+  return requestJson<AdaptiveProgressDashboard>('/api/interview/adaptive/progress');
 }
 
 export function createInterviewSession(
@@ -378,9 +405,9 @@ export function runPythonCode(
 
 export function startAdaptiveInterview(options: {
   role: string;
-  selectedSkill: string;
   level: PreparationLevel;
   maxTurns: number;
+  startFocus: 'weak' | 'strong';
   context: InterviewContext;
   generationStrategy: QuestionGenerationStrategy;
   groundingQuery?: string;
@@ -392,9 +419,10 @@ export function startAdaptiveInterview(options: {
     method: 'POST',
     body: JSON.stringify({
       role: options.role,
-      selected_skills: [options.selectedSkill],
+      selected_skills: [],
       level: options.level,
       max_turns: options.maxTurns,
+      start_focus: options.startFocus,
       context: options.context,
       generation_strategy: options.generationStrategy,
       grounding_query: options.groundingQuery || null,

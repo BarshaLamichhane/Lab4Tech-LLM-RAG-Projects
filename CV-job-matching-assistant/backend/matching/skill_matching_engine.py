@@ -116,6 +116,18 @@ def load_broad_skill_aliases() -> dict[str, list[str]]:
     return normalized_aliases
 
 
+def load_skill_aliases_for_matching() -> dict[str, str]:
+    """Load alias-to-canonical mappings normalized for match comparison."""
+    aliases = load_skill_categories().get("skill_aliases", {})
+    if not isinstance(aliases, dict):
+        return {}
+    return {
+        normalize_for_matching(alias): normalize_for_matching(canonical)
+        for alias, canonical in aliases.items()
+        if isinstance(alias, str) and isinstance(canonical, str) and alias.strip() and canonical.strip()
+    }
+
+
 def load_saved_job_profiles(data_dir: Path = DEFAULT_JOB_SKILLS_DIR) -> dict[str, dict]:
     """Load all saved extracted job-description profiles from disk."""
     job_profiles = {}
@@ -243,6 +255,9 @@ def skills_match(candidate_skill: str, job_skill: str) -> bool:
     """Return True when a candidate skill should count as matching a job skill."""
     candidate = normalize_for_matching(candidate_skill)
     job = normalize_for_matching(job_skill)
+    skill_aliases = load_skill_aliases_for_matching()
+    candidate = skill_aliases.get(candidate, candidate)
+    job = skill_aliases.get(job, job)
 
     if not candidate or not job:
         return False

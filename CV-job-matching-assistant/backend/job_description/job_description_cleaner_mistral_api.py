@@ -76,11 +76,25 @@ class JobSkills(BaseModel):
 
 
 def get_mistral_client(api_key: str | None = None) -> Mistral:
-    resolved_api_key = api_key or os.getenv("MISTRAL_API_KEY")
+    user_api_key = None
+    if api_key is None:
+        from backend.app.llm_context import get_current_llm_username
+        from backend.app.llm_settings_store import get_effective_mistral_credentials
+
+        user_api_key, _ = get_effective_mistral_credentials(get_current_llm_username())
+    resolved_api_key = api_key or user_api_key or os.getenv("MISTRAL_API_KEY")
     if not resolved_api_key:
         raise ValueError("MISTRAL_API_KEY not found in environment or .env file")
 
     return Mistral(api_key=resolved_api_key, timeout_ms=MISTRAL_API_TIMEOUT_MS)
+
+
+def get_mistral_model_name() -> str:
+    from backend.app.llm_context import get_current_llm_username
+    from backend.app.llm_settings_store import get_effective_mistral_credentials
+
+    _, user_model = get_effective_mistral_credentials(get_current_llm_username())
+    return user_model or os.getenv("MISTRAL_API_MODEL_NAME", DEFAULT_MISTRAL_MODEL)
 
 
 def _load_json_file(path: Path) -> dict[str, Any]:
@@ -381,35 +395,44 @@ def _parse_job_skills_response(raw_output: str) -> JobSkills:
 def extract_job_skills(
     job_description: str,
     client: Mistral | None = None,
-    model_name: str = MISTRAL_API_MODEL_NAME,
+    model_name: str | None = None,
 ) -> JobSkills:
     if not job_description.strip():
         raise ValueError("job_description cannot be empty")
 
     start_time = time.perf_counter()
-    mistral_client = client or get_mistral_client()
+    model_name = model_name or get_mistral_model_name()
     prompt = load_job_description_prompt(
         MISTRAL_JOB_DESCRIPTION_PROMPT_NAME,
         job_description,
     )
 
-    response = mistral_client.chat.complete(
-        model=model_name,
-        messages=[
-            {
-                "role": "system",
-                "content": "You extract structured JSON from job descriptions.",
-            },
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
-        temperature=0,
-        response_format={"type": "json_object"},
-    )
+    if client:
+        mistral_client = client
+        response = mistral_client.chat.complete(
+            model=model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You extract structured JSON from job descriptions.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0,
+            response_format={"type": "json_object"},
+        )
+        raw_output = response.choices[0].message.content
+    else:
+        from backend.app.llm_client import complete_json_chat
 
-    raw_output = response.choices[0].message.content
+        raw_output = complete_json_chat(
+            "You extract structured JSON from job descriptions.",
+            prompt,
+            0,
+        ).content
     extracted_skills = _parse_job_skills_response(raw_output)
     logger.info(
         "Mistral API job skill extraction completed in %.2f seconds",

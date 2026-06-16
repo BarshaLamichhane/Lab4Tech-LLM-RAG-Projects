@@ -19,6 +19,18 @@
     "llm": "large language models",
     "llms": "large language models",
     "rag": "RAG architectures",
+    "rag pipelines": "RAG architectures",
+    "rag systems": "RAG architectures",
+    "retrieval-augmented generation": "RAG architectures",
+    "retrieval augmented generation": "RAG architectures",
+    "retrieval augmented generation systems": "RAG architectures",
+    "large-scale dataset processing": "Data preprocessing and large dataset handling",
+    "large scale dataset processing": "Data preprocessing and large dataset handling",
+    "large-scale data processing": "Data preprocessing and large dataset handling",
+    "large scale data processing": "Data preprocessing and large dataset handling",
+    "large dataset processing": "Data preprocessing and large dataset handling",
+    "dataset preprocessing": "Data preprocessing and large dataset handling",
+    "data preprocessing pipelines": "Data preprocessing and large dataset handling",
     "iac": "Infrastructure as Code",
     "rest api": "API integration",
     "rest apis": "API integration",
@@ -43,6 +55,23 @@
     "integrations"
   ],
   "broad_skill_aliases": {
+    "RAG architectures": [
+      "RAG",
+      "RAG pipelines",
+      "RAG systems",
+      "Retrieval-augmented generation",
+      "Retrieval augmented generation",
+      "Retrieval augmented generation systems"
+    ],
+    "Data preprocessing and large dataset handling": [
+      "Large-scale dataset processing",
+      "Large scale dataset processing",
+      "Large-scale data processing",
+      "Large scale data processing",
+      "Large dataset processing",
+      "Dataset preprocessing",
+      "Data preprocessing pipelines"
+    ],
     "javascript/typescript": [
       "javascript",
       "typescript"

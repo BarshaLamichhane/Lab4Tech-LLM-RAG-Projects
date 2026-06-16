@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
@@ -20,6 +21,8 @@ from backend.app.schemas import (
     MatchNewJobRequest,
     MatchResponse,
     MatchSavedJobRequest,
+    UserLLMSettingsRequest,
+    UserLLMSettingsResponse,
     UserResponse,
 )
 from backend.app.auth import (
@@ -38,12 +41,19 @@ from backend.app.evaluation_audit_store import (
 )
 from backend.app.session_store import (
     initialize_session_database,
+    load_adaptive_interview_sessions,
     load_interview_session,
     load_interview_sessions,
     load_user_sessions,
     save_interview_session,
     save_user_session,
 )
+from backend.app.llm_settings_store import (
+    get_user_llm_settings,
+    initialize_llm_settings_database,
+    save_user_llm_settings,
+)
+from backend.app.llm_client import effective_llm_provider_model
 from backend.app.settings_store import load_app_settings, save_app_settings
 from backend.app.services import (
     build_new_job_match,
@@ -66,14 +76,13 @@ from backend.interview.preparation_interview import (
     generate_preparation_interview,
     regenerate_preparation_question,
 )
-from backend.interview.progress_dashboard import build_progress_dashboard
+from backend.interview.progress_dashboard import build_adaptive_progress_dashboard, build_progress_dashboard
 from backend.interview.grounding_index import (
     ensure_grounding_index,
     list_grounding_sources,
     save_grounding_document,
     save_grounding_url,
 )
-from backend.job_description.job_description_cleaner_mistral_api import MISTRAL_API_MODEL_NAME
 from backend.interview.schemas import (
     AdaptiveInterviewAnswerRequest,
     AdaptiveInterviewResponse,
@@ -101,6 +110,7 @@ from backend.matching.skill_matching_engine import load_skill_categories as load
 async def lifespan(_: FastAPI):
     initialize_auth_database()
     initialize_session_database()
+    initialize_llm_settings_database()
     initialize_evaluation_audit_database()
     yield
 
@@ -115,6 +125,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CONFIG.cors_allowed_origins,
+    allow_origin_regex=CONFIG.cors_allow_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
@@ -130,7 +141,12 @@ async def reject_cross_origin_cookie_writes(request: Request, call_next):
         uses_cookie = CONFIG.auth_cookie_name in request.cookies
         same_origin = str(request.base_url).rstrip("/")
         trusted_origins = {*CONFIG.cors_allowed_origins, same_origin}
-        if uses_cookie and origin and origin not in trusted_origins:
+        regex_allowed = bool(
+            origin
+            and CONFIG.cors_allow_origin_regex
+            and re.fullmatch(CONFIG.cors_allow_origin_regex, origin)
+        )
+        if uses_cookie and origin and origin not in trusted_origins and not regex_allowed:
             return Response(status_code=403, content="Cross-origin request rejected")
     return await call_next(request)
 
@@ -192,6 +208,28 @@ def change_password_route(
     return response
 
 
+@app.get("/api/account/llm-settings", response_model=UserLLMSettingsResponse)
+def get_account_llm_settings(user: CurrentUser = Depends(require_user)) -> dict:
+    return get_user_llm_settings(user.username)
+
+
+@app.put("/api/account/llm-settings", response_model=UserLLMSettingsResponse)
+def update_account_llm_settings(
+    request: UserLLMSettingsRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        return save_user_llm_settings(
+            username=user.username,
+            provider=request.provider,
+            model_name=request.model_name,
+            api_key=request.api_key,
+            clear_api_key=request.clear_api_key,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.get("/api/admin/settings", response_model=AppSettings)
 def get_admin_settings(user: CurrentUser = Depends(require_user)) -> dict:
     _ensure_admin(user)
@@ -235,6 +273,11 @@ def get_interview_sessions(user: CurrentUser = Depends(require_user)) -> list[di
 @app.get("/api/interview/progress")
 def get_interview_progress(user: CurrentUser = Depends(require_user)) -> dict:
     return build_progress_dashboard(load_interview_sessions(user.username))
+
+
+@app.get("/api/interview/adaptive/progress")
+def get_adaptive_interview_progress(user: CurrentUser = Depends(require_user)) -> dict:
+    return build_adaptive_progress_dashboard(load_adaptive_interview_sessions(user.username))
 
 
 @app.get("/api/interview/grounding/sources")
@@ -458,7 +501,7 @@ def evaluate_interview_answer(
         save_evaluation_audit(
             username=user.username,
             question_id=request.question.id,
-            model=MISTRAL_API_MODEL_NAME,
+            model="/".join(effective_llm_provider_model()),
             prompt=prompt,
             raw_response=raw_response,
             evaluation=evaluation.model_dump(),
