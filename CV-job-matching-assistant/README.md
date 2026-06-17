@@ -276,6 +276,11 @@ Create additional deployed users with:
 docker compose exec backend python -m backend.app.create_user new-user
 docker compose exec backend python -m backend.app.create_user another-admin --role admin
 ```
+reset admin password. NOTE: do this only if required
+```bash
+cd CV-job-matching-assistant
+python -m backend.app.reset_password admin
+```
 
 For public deployment, terminate TLS at a cloud load balancer or reverse proxy
 and keep `COOKIE_SECURE=true`. Back up the Docker data volume regularly.
@@ -319,6 +324,12 @@ On Mac/Linux, find and stop the process using port `8000`:
 lsof -i :8000
 kill <PID>
 ```
+or 
+```bash
+lsof -tiTCP:<portno> -sTCP:LISTEN | xargs kill -9
+```
+port no can be 8000, 8001 etc
+
 
 Alternatively, start the backend on another port. If you do this, also update `API_BASE_URL` in `frontend/react-frontend/src/api.ts`.
 
@@ -339,9 +350,6 @@ The current MVP supports:
 - Match percentage calculation
 - Missing skill analysis
 - Alternative role recommendations
-- Deterministic structured project extraction from CV project sections
-- Reviewed expected-point templates for common Python interview topics
-- Downloadable interview question sets with guidance hidden until scoring by default
 
 ---
 
