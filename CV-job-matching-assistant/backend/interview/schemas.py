@@ -147,11 +147,23 @@ class PreparationInterviewRequest(BaseModel):
 
 class GroundingIndexRequest(BaseModel):
     mode: GroundingIndexMode = "update"
+    chunk_size: int = Field(default=900, ge=200, le=4000)
+    chunk_overlap: int = Field(default=150, ge=0, le=1000)
 
 
 class GroundingUrlRequest(BaseModel):
     url: str
     filename: str | None = None
+
+
+class GroundingTextRequest(BaseModel):
+    text: str = Field(min_length=1)
+    filename: str = Field(default="pasted_grounding_material.txt", min_length=1, max_length=120)
+
+
+class GroundingRetrievalRequest(BaseModel):
+    query: str = Field(min_length=1)
+    top_k: int = Field(default=5, ge=1, le=20)
 
 
 class PreparationInterviewResponse(BaseModel):

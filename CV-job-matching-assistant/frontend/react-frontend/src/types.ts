@@ -148,6 +148,20 @@ export interface GroundingSource {
   indexed_at: string | null;
 }
 
+export interface GroundingChunk {
+  index: number;
+  document_id: string;
+  source: string;
+  hash: string;
+  chunk_preview: string;
+  chunk_length: number;
+}
+
+export interface GroundingContextChunk {
+  source: string;
+  text: string;
+}
+
 export interface LearningPathItem {
   topic: string;
   priority: string;

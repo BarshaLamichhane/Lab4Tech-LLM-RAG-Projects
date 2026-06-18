@@ -9,12 +9,12 @@ import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { HomePage } from './pages/HomePage';
 import { JobSkillExtractorPage } from './pages/JobSkillExtractorPage';
+import { LearningScoringPage } from './pages/LearningScoringPage';
 import { InterviewPracticePage } from './pages/InterviewPracticePage';
 import { InterviewProgressPage } from './pages/InterviewProgressPage';
 import { LoginPage } from './pages/LoginPage';
 import { NewJobMatchPage } from './pages/NewJobMatchPage';
 import { SavedJobMatchPage } from './pages/SavedJobMatchPage';
-import { SessionHistoryPage } from './pages/SessionHistoryPage';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -38,9 +38,9 @@ export function AppRoutes() {
       <Route path="/job-skill-extractor" element={<ProtectedRoute><JobSkillExtractorPage /></ProtectedRoute>} />
       <Route path="/interview-practice" element={<ProtectedRoute><InterviewPracticePage /></ProtectedRoute>} />
       <Route path="/adaptive-interview" element={<ProtectedRoute><AdaptiveInterviewPage /></ProtectedRoute>} />
+      <Route path="/learning-scoring" element={<AdminRoute><LearningScoringPage /></AdminRoute>} />
       <Route path="/adaptive-progress" element={<ProtectedRoute><AdaptiveProgressPage /></ProtectedRoute>} />
       <Route path="/interview-progress" element={<ProtectedRoute><InterviewProgressPage /></ProtectedRoute>} />
-      <Route path="/sessions" element={<ProtectedRoute><SessionHistoryPage /></ProtectedRoute>} />
       <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />

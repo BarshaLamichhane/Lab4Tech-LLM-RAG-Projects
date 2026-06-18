@@ -15,6 +15,7 @@ PyYAML
 ollama
 mistralai
 openai
+certifi
 fastapi
 uvicorn[standard]
 python-multipart

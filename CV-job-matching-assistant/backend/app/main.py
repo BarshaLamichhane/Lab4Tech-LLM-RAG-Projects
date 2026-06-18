@@ -79,7 +79,9 @@ from backend.interview.preparation_interview import (
 from backend.interview.progress_dashboard import build_adaptive_progress_dashboard, build_progress_dashboard
 from backend.interview.grounding_index import (
     ensure_grounding_index,
+    list_grounding_index_chunks,
     list_grounding_sources,
+    retrieve_grounding_context,
     save_grounding_document,
     save_grounding_url,
 )
@@ -93,6 +95,8 @@ from backend.interview.schemas import (
     CodeRunResponse,
     EvaluateAnswerRequest,
     GroundingIndexRequest,
+    GroundingRetrievalRequest,
+    GroundingTextRequest,
     GroundingUrlRequest,
     InterviewContext,
     InterviewQuestion,
@@ -285,6 +289,12 @@ def get_grounding_sources(user: CurrentUser = Depends(require_user)) -> list[dic
     return list_grounding_sources()
 
 
+@app.get("/api/interview/grounding/chunks")
+def get_grounding_chunks(user: CurrentUser = Depends(require_user)) -> list[dict]:
+    _ensure_admin(user)
+    return list_grounding_index_chunks()
+
+
 @app.post("/api/interview/grounding/upload", status_code=201)
 async def upload_grounding_documents(
     files: list[UploadFile] = File(...),
@@ -314,13 +324,42 @@ def upload_grounding_url(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/api/interview/grounding/text", status_code=201)
+def upload_grounding_text(
+    request: GroundingTextRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    try:
+        filename = request.filename if request.filename.lower().endswith(".txt") else f"{request.filename}.txt"
+        saved = save_grounding_document(filename, request.text.encode("utf-8"))
+        return {"document": saved, "sources": list_grounding_sources()}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/interview/grounding/index")
 def build_grounding_index(
     request: GroundingIndexRequest,
     user: CurrentUser = Depends(require_user),
 ) -> dict:
     try:
-        return ensure_grounding_index(request.mode)
+        return ensure_grounding_index(
+            request.mode,
+            chunk_size=request.chunk_size,
+            chunk_overlap=request.chunk_overlap,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/grounding/retrieve")
+def retrieve_grounding_preview(
+    request: GroundingRetrievalRequest,
+    user: CurrentUser = Depends(require_user),
+) -> list[dict]:
+    _ensure_admin(user)
+    try:
+        return retrieve_grounding_context(request.query, request.top_k)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

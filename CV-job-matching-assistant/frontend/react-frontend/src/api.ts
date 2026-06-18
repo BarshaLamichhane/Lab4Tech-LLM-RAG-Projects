@@ -10,7 +10,9 @@ import type {
   InterviewContext,
   InterviewEngine,
   InterviewQuestion,
+  GroundingContextChunk,
   GroundingIndexMode,
+  GroundingChunk,
   GroundingSource,
   InterviewPracticeSession,
   InterviewPracticeSessionPayload,
@@ -24,7 +26,6 @@ import type {
   PreparationLevel,
   SkillWeights,
   UserLLMSettings,
-  UserSession,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'http://localhost:8000' : '');
@@ -122,10 +123,6 @@ export function createUser(
     method: 'POST',
     body: JSON.stringify({ username, password, role }),
   });
-}
-
-export function getUserSessions(): Promise<UserSession[]> {
-  return requestJson<UserSession[]>('/api/sessions');
 }
 
 export function getInterviewSessions(): Promise<InterviewPracticeSession[]> {
@@ -291,6 +288,10 @@ export function getGroundingSources(): Promise<GroundingSource[]> {
   return requestJson<GroundingSource[]>('/api/interview/grounding/sources');
 }
 
+export function getGroundingChunks(): Promise<GroundingChunk[]> {
+  return requestJson<GroundingChunk[]>('/api/interview/grounding/chunks');
+}
+
 export async function uploadGroundingDocuments(files: FileList): Promise<GroundingSource[]> {
   const body = new FormData();
   Array.from(files).forEach((file) => body.append('files', file));
@@ -313,10 +314,32 @@ export function uploadGroundingUrl(url: string): Promise<{ sources: GroundingSou
   });
 }
 
-export function buildGroundingIndex(mode: GroundingIndexMode): Promise<{ sources: GroundingSource[]; indexed_chunks: number | null }> {
+export function uploadGroundingText(text: string, filename = 'pasted_grounding_material.txt'): Promise<{ sources: GroundingSource[] }> {
+  return requestJson('/api/interview/grounding/text', {
+    method: 'POST',
+    body: JSON.stringify({ text, filename }),
+  });
+}
+
+export function buildGroundingIndex(
+  mode: GroundingIndexMode,
+  chunkSize = 900,
+  chunkOverlap = 150,
+): Promise<{ sources: GroundingSource[]; indexed_chunks: number | null }> {
   return requestJson('/api/interview/grounding/index', {
     method: 'POST',
-    body: JSON.stringify({ mode }),
+    body: JSON.stringify({
+      mode,
+      chunk_size: chunkSize,
+      chunk_overlap: chunkOverlap,
+    }),
+  });
+}
+
+export function retrieveGroundingPreview(query: string, topK = 5): Promise<GroundingContextChunk[]> {
+  return requestJson<GroundingContextChunk[]>('/api/interview/grounding/retrieve', {
+    method: 'POST',
+    body: JSON.stringify({ query, top_k: topK }),
   });
 }
 

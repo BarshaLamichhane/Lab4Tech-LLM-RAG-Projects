@@ -4,6 +4,7 @@ import hashlib
 import json
 import shutil
 import ipaddress
+import ssl
 import socket
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -21,9 +22,16 @@ INDEX_DIR = GROUNDING_ROOT / "faiss_index"
 REGISTRY_PATH = GROUNDING_ROOT / "document_registry.json"
 SUPPORTED_SUFFIXES = {".pdf", ".txt", ".md", ".xml"}
 GroundingIndexMode = Literal["use_existing", "recreate", "update"]
+DEFAULT_CHUNK_SIZE = 900
+DEFAULT_CHUNK_OVERLAP = 150
 
 
-def ensure_grounding_index(mode: GroundingIndexMode) -> dict:
+def ensure_grounding_index(
+    mode: GroundingIndexMode,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    chunk_overlap: int = DEFAULT_CHUNK_OVERLAP,
+) -> dict:
+    chunk_size, chunk_overlap = _validated_chunk_settings(chunk_size, chunk_overlap)
     DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
     if mode == "use_existing":
         if not _index_exists():
@@ -37,9 +45,10 @@ def ensure_grounding_index(mode: GroundingIndexMode) -> dict:
     current_hashes = {path.name: _file_hash(path) for path in documents}
     registry = _load_registry()
     registered = {item["filename"]: item for item in registry.get("documents", [])}
+    chunk_settings_changed = registry.get("chunk_size") not in {None, chunk_size} or registry.get("chunk_overlap") not in {None, chunk_overlap}
 
     if mode == "recreate":
-        return _recreate_index(documents, current_hashes, mode)
+        return _recreate_index(documents, current_hashes, mode, chunk_size, chunk_overlap)
 
     changed = [
         path
@@ -47,8 +56,8 @@ def ensure_grounding_index(mode: GroundingIndexMode) -> dict:
         if path.name in registered and registered[path.name]["hash"] != current_hashes[path.name]
     ]
     removed = set(registered) - set(current_hashes)
-    if changed or removed or not _index_exists():
-        return _recreate_index(documents, current_hashes, mode)
+    if changed or removed or chunk_settings_changed or not _index_exists():
+        return _recreate_index(documents, current_hashes, mode, chunk_size, chunk_overlap)
 
     registered_hashes = {item["hash"] for item in registered.values()}
     new_documents = [
@@ -59,12 +68,12 @@ def ensure_grounding_index(mode: GroundingIndexMode) -> dict:
     if not new_documents:
         return {"mode": mode, "sources": list_grounding_sources(), "indexed_chunks": 0}
 
-    chunks = _load_and_chunk(new_documents)
+    chunks = _load_and_chunk(new_documents, chunk_size, chunk_overlap)
     vector_store = _load_vector_store()
     vector_store.add_documents(chunks)
     vector_store.save_local(str(INDEX_DIR))
     new_entries = _registry_entries(new_documents, current_hashes, chunks)
-    _save_registry({"documents": [*registry.get("documents", []), *new_entries]})
+    _save_registry({"chunk_size": chunk_size, "chunk_overlap": chunk_overlap, "documents": [*registry.get("documents", []), *new_entries]})
     return {"mode": mode, "sources": list_grounding_sources(), "indexed_chunks": len(chunks)}
 
 
@@ -104,7 +113,7 @@ def save_grounding_url(url: str, filename: str | None = None, max_bytes: int = 1
         if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
             raise ValueError("Private or local URLs are not allowed.")
     request = Request(url, headers={"User-Agent": "HireReadyAI/1.0"})
-    with urlopen(request, timeout=15) as response:
+    with urlopen(request, timeout=15, context=_ssl_context()) as response:
         content = response.read(max_bytes + 1)
     if len(content) > max_bytes:
         raise ValueError("Online grounding material exceeds the upload size limit.")
@@ -130,26 +139,58 @@ def list_grounding_sources() -> list[dict]:
     ]
 
 
-def _recreate_index(documents: list[Path], hashes: dict[str, str], mode: str) -> dict:
+def list_grounding_index_chunks(limit: int = 100) -> list[dict]:
+    if not _index_exists():
+        return []
+    vector_store = _load_vector_store()
+    index_map = getattr(vector_store, "index_to_docstore_id", {}) or {}
+    docstore = getattr(getattr(vector_store, "docstore", None), "_dict", {}) or {}
+    rows = []
+    for index in sorted(index_map)[: max(1, min(limit, 500))]:
+        document_id = index_map[index]
+        document = docstore.get(document_id)
+        if not document:
+            continue
+        text = document.page_content.strip()
+        rows.append(
+            {
+                "index": index,
+                "document_id": document_id,
+                "source": document.metadata.get("source", "unknown"),
+                "hash": document.metadata.get("hash", ""),
+                "chunk_preview": text[:700],
+                "chunk_length": len(text),
+            }
+        )
+    return rows
+
+
+def _recreate_index(
+    documents: list[Path],
+    hashes: dict[str, str],
+    mode: str,
+    chunk_size: int,
+    chunk_overlap: int,
+) -> dict:
     if INDEX_DIR.exists():
         shutil.rmtree(INDEX_DIR)
-    chunks = _load_and_chunk(documents)
+    chunks = _load_and_chunk(documents, chunk_size, chunk_overlap)
     if not chunks:
         raise ValueError("Uploaded grounding documents did not contain readable text.")
     vector_store = _faiss_class().from_documents(chunks, _embeddings())
     vector_store.save_local(str(INDEX_DIR))
-    _save_registry({"documents": _registry_entries(documents, hashes, chunks)})
+    _save_registry({"chunk_size": chunk_size, "chunk_overlap": chunk_overlap, "documents": _registry_entries(documents, hashes, chunks)})
     return {"mode": mode, "sources": list_grounding_sources(), "indexed_chunks": len(chunks)}
 
 
-def _load_and_chunk(paths: list[Path]) -> list:
+def _load_and_chunk(paths: list[Path], chunk_size: int, chunk_overlap: int) -> list:
     Document = _document_class()
     source_documents = [
         Document(page_content=text, metadata={"source": path.name, "hash": _file_hash(path)})
         for path in paths
         if (text := _read_document(path)).strip()
     ]
-    splitter = _splitter_class()(chunk_size=900, chunk_overlap=150)
+    splitter = _splitter_class()(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     return splitter.split_documents(source_documents)
 
 
@@ -230,6 +271,23 @@ def _load_registry() -> dict:
 def _save_registry(registry: dict) -> None:
     GROUNDING_ROOT.mkdir(parents=True, exist_ok=True)
     REGISTRY_PATH.write_text(json.dumps(registry, indent=2), encoding="utf-8")
+
+
+def _validated_chunk_settings(chunk_size: int, chunk_overlap: int) -> tuple[int, int]:
+    chunk_size = max(200, min(int(chunk_size or DEFAULT_CHUNK_SIZE), 4000))
+    chunk_overlap = max(0, min(int(chunk_overlap or DEFAULT_CHUNK_OVERLAP), 1000))
+    if chunk_overlap >= chunk_size:
+        chunk_overlap = max(0, chunk_size // 5)
+    return chunk_size, chunk_overlap
+
+
+def _ssl_context():
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ModuleNotFoundError:
+        return ssl.create_default_context()
 
 
 def _embeddings():

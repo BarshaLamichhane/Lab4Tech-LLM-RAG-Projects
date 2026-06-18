@@ -329,7 +329,12 @@ or
 lsof -tiTCP:<portno> -sTCP:LISTEN | xargs kill -9
 ```
 port no can be 8000, 8001 etc
+for example 
 
+```bash
+lsof -tiTCP:8000 -sTCP:LISTEN | xargs kill -9
+lsof -tiTCP:8001 -sTCP:LISTEN | xargs kill -9
+```
 
 Alternatively, start the backend on another port. If you do this, also update `API_BASE_URL` in `frontend/react-frontend/src/api.ts`.
 

@@ -61,6 +61,18 @@ EXTERNAL_TECH_REFERENCES = {
     "pytorch",
     "rag",
 }
+GROUNDED_SKILLS = {
+    "langgraph",
+    "langchain",
+    "azure ai foundry",
+    "openai api",
+    "mistral api",
+    "crewai",
+    "mcp",
+    "internal architecture",
+    "company policy",
+    "uploaded learning material",
+}
 PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "interview_preparation_question_generator.yml"
 MAX_GENERATION_ATTEMPTS = 5
 
@@ -293,6 +305,7 @@ def _validated_question(
     updates = {
         "skill": canonical_skill,
         "source_group": "selected_skills",
+        "requires_grounding": generation_strategy == "grounded" or canonical_skill.casefold() in GROUNDED_SKILLS,
         "generation_strategy": generation_strategy,
         "grounding_used": grounding_used or [],
     }

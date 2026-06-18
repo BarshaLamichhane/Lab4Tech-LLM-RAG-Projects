@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
 
+import { useAuth } from '../AuthContext';
+
 export function HomePage() {
+  const { user } = useAuth();
+
   return (
     <>
       <section className="home-hero">
@@ -48,6 +52,7 @@ export function HomePage() {
           <div className="home-actions">
             <Link to="/interview-practice">Preparation mode</Link>
             <Link to="/adaptive-interview">Adaptive interview</Link>
+            {user?.role === 'admin' && <Link to="/learning-scoring">Learning & scoring</Link>}
             <Link to="/adaptive-progress">Adaptive progress</Link>
           </div>
         </article>

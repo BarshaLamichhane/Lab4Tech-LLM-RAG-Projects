@@ -39,11 +39,11 @@ export function App() {
             <div className="nav-dropdown">
               <NavLink to="/interview-practice">Preparation mode</NavLink>
               <NavLink to="/adaptive-interview">Adaptive interview</NavLink>
+              {user.role === 'admin' && <NavLink to="/learning-scoring">Learning & scoring</NavLink>}
               <NavLink to="/interview-progress">Preparation progress</NavLink>
               <NavLink to="/adaptive-progress">Adaptive progress</NavLink>
             </div>
           </div>
-          <NavLink to="/sessions">Sessions</NavLink>
           <NavLink to="/account">Account</NavLink>
           {user.role === 'admin' && <NavLink to="/admin/users">Users</NavLink>}
           {user.role === 'admin' && <NavLink to="/admin/settings">Settings</NavLink>}
