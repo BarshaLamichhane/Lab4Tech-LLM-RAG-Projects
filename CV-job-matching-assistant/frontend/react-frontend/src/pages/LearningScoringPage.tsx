@@ -1,15 +1,23 @@
 import { type ChangeEvent, useEffect, useState } from 'react';
 
 import {
-  buildGroundingIndex,
-  getGroundingChunks,
+  buildGroundingLearningIndex,
   getGroundingSources,
-  retrieveGroundingPreview,
+  getGroundingLearningRecommendation,
+  getGroundingLearningStatus,
+  inspectGroundingLearningIndex,
+  searchGroundingLearningContext,
   uploadGroundingDocuments,
   uploadGroundingText,
-  uploadGroundingUrl,
 } from '../api';
-import type { GroundingChunk, GroundingContextChunk, GroundingIndexMode, GroundingSource } from '../types';
+import type {
+  GroundingIndexMode,
+  GroundingLearningIndexPayload,
+  GroundingLearningRecommendation,
+  GroundingLearningSearchResult,
+  GroundingLearningStatus,
+  GroundingSource,
+} from '../types';
 
 const preparationSteps = [
   {
@@ -324,22 +332,52 @@ const workedExamples = [
   },
 ];
 
+function readableSeparator(separator: string) {
+  if (separator === '\\n\\n') return 'paragraph break \\n\\n';
+  if (separator === '\\n') return 'line break \\n';
+  if (separator === ' ') return 'space';
+  return 'individual characters';
+}
+
+function VectorStats({ vector }: { vector: { dimensions: number; magnitude: number; minimum: number; maximum: number; non_zero_values: number; first_16_values: number[] } }) {
+  return (
+    <div className="vector-stats">
+      {[
+        [vector.dimensions, 'dimensions'],
+        [vector.magnitude, 'magnitude'],
+        [vector.minimum, 'minimum value'],
+        [vector.maximum, 'maximum value'],
+        [vector.non_zero_values, 'non-zero values'],
+      ].map(([value, label]) => (
+        <div key={label}>
+          <strong>{value}</strong>
+          <span>{label}</span>
+        </div>
+      ))}
+      <code>[{vector.first_16_values.join(', ')} ...]</code>
+    </div>
+  );
+}
+
 export function LearningScoringPage() {
   const [activeLearning, setActiveLearning] = useState<'interview_scoring' | 'rag_learning'>('interview_scoring');
   const [groundingIndexMode, setGroundingIndexMode] = useState<GroundingIndexMode>('use_existing');
   const [groundingSources, setGroundingSources] = useState<GroundingSource[]>([]);
-  const [groundingChunks, setGroundingChunks] = useState<GroundingChunk[]>([]);
-  const [retrievedContext, setRetrievedContext] = useState<GroundingContextChunk[]>([]);
-  const [groundingUrl, setGroundingUrl] = useState('');
+  const [learningStatus, setLearningStatus] = useState<GroundingLearningStatus | null>(null);
+  const [learningRecommendation, setLearningRecommendation] = useState<GroundingLearningRecommendation | null>(null);
+  const [learningIndex, setLearningIndex] = useState<GroundingLearningIndexPayload | null>(null);
+  const [learningSearch, setLearningSearch] = useState<GroundingLearningSearchResult | null>(null);
   const [pastedGroundingText, setPastedGroundingText] = useState(defaultGroundingText);
   const [pastedFilename, setPastedFilename] = useState('rag_learning_sample.txt');
   const [retrievalQuery, setRetrievalQuery] = useState('LangGraph stateful agent workflow reliability');
-  const [retrievalTopK, setRetrievalTopK] = useState(5);
+  const [retrievalTopK, setRetrievalTopK] = useState(3);
+  const [maximumL2Distance, setMaximumL2Distance] = useState(1.2);
   const [showGroundingSources, setShowGroundingSources] = useState(false);
   const [showVectorPreview, setShowVectorPreview] = useState(false);
   const [showRetrievedContext, setShowRetrievedContext] = useState(false);
-  const [chunkSize, setChunkSize] = useState(900);
-  const [chunkOverlap, setChunkOverlap] = useState(150);
+  const [showSavedFiles, setShowSavedFiles] = useState(false);
+  const [chunkSize, setChunkSize] = useState(220);
+  const [chunkOverlap, setChunkOverlap] = useState(40);
   const [loadingLabel, setLoadingLabel] = useState('');
   const [error, setError] = useState('');
 
@@ -350,9 +388,14 @@ export function LearningScoringPage() {
 
   async function refreshGroundingSources() {
     await runGroundingTask('Loading grounding sources', async () => {
-      const [sources, chunks] = await Promise.all([getGroundingSources(), getGroundingChunks()]);
+      const [sources, status, recommendation] = await Promise.all([
+        getGroundingSources(),
+        getGroundingLearningStatus(),
+        getGroundingLearningRecommendation(chunkSize, chunkOverlap),
+      ]);
       setGroundingSources(sources);
-      setGroundingChunks(chunks);
+      setLearningStatus(status);
+      setLearningRecommendation(recommendation);
     });
   }
 
@@ -360,21 +403,10 @@ export function LearningScoringPage() {
     if (!event.target.files?.length) return;
     await runGroundingTask('Uploading grounding documents', async () => {
       setGroundingSources(await uploadGroundingDocuments(event.target.files!));
-      setGroundingChunks(await getGroundingChunks());
+      setLearningRecommendation(await getGroundingLearningRecommendation(chunkSize, chunkOverlap));
       setGroundingIndexMode('update');
     });
     event.target.value = '';
-  }
-
-  async function addGroundingUrl() {
-    if (!groundingUrl.trim()) return;
-    await runGroundingTask('Adding grounding URL', async () => {
-      const result = await uploadGroundingUrl(groundingUrl.trim());
-      setGroundingSources(result.sources);
-      setGroundingChunks(await getGroundingChunks());
-      setGroundingIndexMode('update');
-      setGroundingUrl('');
-    });
   }
 
   async function savePastedGroundingText() {
@@ -382,7 +414,7 @@ export function LearningScoringPage() {
     await runGroundingTask('Saving pasted grounding text', async () => {
       const result = await uploadGroundingText(pastedGroundingText.trim(), pastedFilename.trim() || 'pasted_grounding_material.txt');
       setGroundingSources(result.sources);
-      setGroundingChunks(await getGroundingChunks());
+      setLearningRecommendation(await getGroundingLearningRecommendation(chunkSize, chunkOverlap));
       setGroundingIndexMode('update');
       setShowGroundingSources(true);
     });
@@ -390,18 +422,35 @@ export function LearningScoringPage() {
 
   async function prepareGroundingIndex() {
     await runGroundingTask('Preparing grounding index', async () => {
-      const result = await buildGroundingIndex(groundingIndexMode, chunkSize, chunkOverlap);
-      setGroundingSources(result.sources);
-      setGroundingChunks(await getGroundingChunks());
+      const result = await buildGroundingLearningIndex(groundingIndexMode, chunkSize, chunkOverlap);
+      setLearningIndex(result);
+      setLearningStatus(await getGroundingLearningStatus());
+      setLearningRecommendation(await getGroundingLearningRecommendation(chunkSize, chunkOverlap));
+      setGroundingSources(await getGroundingSources());
       setShowGroundingSources(true);
       setShowVectorPreview(true);
+    });
+  }
+
+  async function inspectExistingIndex() {
+    await runGroundingTask('Inspecting existing FAISS index', async () => {
+      setLearningIndex(await inspectGroundingLearningIndex());
+      setLearningStatus(await getGroundingLearningStatus());
+      setShowVectorPreview(true);
+    });
+  }
+
+  async function refreshRecommendation() {
+    await runGroundingTask('Checking index recommendation', async () => {
+      setLearningRecommendation(await getGroundingLearningRecommendation(chunkSize, chunkOverlap));
+      setLearningStatus(await getGroundingLearningStatus());
     });
   }
 
   async function previewRetrievedContext() {
     if (!retrievalQuery.trim()) return;
     await runGroundingTask('Retrieving context for LLM prompt', async () => {
-      setRetrievedContext(await retrieveGroundingPreview(retrievalQuery.trim(), retrievalTopK));
+      setLearningSearch(await searchGroundingLearningContext(retrievalQuery.trim(), retrievalTopK, maximumL2Distance));
       setShowRetrievedContext(true);
     });
   }
@@ -454,250 +503,175 @@ export function LearningScoringPage() {
       {activeLearning === 'rag_learning' && <section className="panel learning-score-wide">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">RAG Learning</p>
-            <h2>How grounded documents move through the system</h2>
+            <p className="eyebrow">Model-powered RAG Learning Lab</p>
+            <h2>Inside HuggingFace embeddings, LangChain chunking, and FAISS</h2>
+            <p className="muted-line">This lab uses the real grounding store in <code>data/grounding</code>, not a separate demo vector database.</p>
           </div>
         </div>
 
         <div className="rag-learning-band">
-          <div>
-            <span>Important</span>
-            <strong>RAG is optional</strong>
-            <p>Normal Python, SQL, ML, and general interview generation stay LLM-only unless the user explicitly selects Grounded material.</p>
-          </div>
-          <div>
-            <span>RAG stack</span>
-            <strong>LangChain + HuggingFace + FAISS</strong>
-            <p>The same grounding path uses LangChain documents and chunking, HuggingFace embeddings, and a local FAISS vector index.</p>
-          </div>
-          <div>
-            <span>Source of truth</span>
-            <strong>Uploaded or verified documents</strong>
-            <p>Grounded questions and grounded scoring should stay inside retrieved document context.</p>
-          </div>
+          <div><span>Important</span><strong>No LLM call here</strong><p>Indexing uses chunking, embeddings, and FAISS only. LLMs are called later during grounded question generation or scoring.</p></div>
+          <div><span>Vector store</span><strong>data/grounding/faiss_index</strong><p>The same index is used by Interview Preparation and Adaptive Interview when Grounded material is selected.</p></div>
+          <div><span>Encoder</span><strong>all-MiniLM-L6-v2</strong><p>Chunks and questions are embedded separately into the same 384-dimensional semantic vector space.</p></div>
         </div>
 
-        <div className="rag-control-panel">
+        <div className="rag-control-panel model-rag-lab">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Grounding Controls</p>
-              <h3>Upload material and prepare the FAISS index</h3>
+              <p className="eyebrow">1</p>
+              <h3>Index a document with the real model</h3>
             </div>
           </div>
 
-          <div className="rag-control-grid">
-            <label className="file-control">
-              Upload documents
-              <input
-                accept=".pdf,.txt,.md,.xml"
-                multiple
-                type="file"
-                onChange={uploadGroundingFiles}
-              />
-            </label>
+          <div className="input-options">
+            <article><strong>Option 1: Default example</strong><p>Restore the included teaching text.</p><button className="ghost-button" type="button" onClick={() => setPastedGroundingText(defaultGroundingText)}>Use default text</button></article>
+            <article><strong>Option 2: Copy and paste</strong><p>Paste or type directly in the editable document area, then save it as a grounding document.</p></article>
+            <article><strong>Option 3: Upload documents</strong><p>Choose one or more PDF, TXT, MD, or XML files. The app stores them under data/grounding/documents.</p><label className="file-control">Upload<input accept=".pdf,.txt,.md,.xml" multiple type="file" onChange={uploadGroundingFiles} /></label></article>
+          </div>
 
-            <label className="field-label">
-              Index mode
-              <select value={groundingIndexMode} onChange={(event) => setGroundingIndexMode(event.target.value as GroundingIndexMode)}>
-                <option value="use_existing">Use existing index</option>
-                <option value="update">Update index</option>
-                <option value="recreate">Recreate index</option>
-              </select>
-            </label>
-
-            <button className="primary-button" type="button" onClick={prepareGroundingIndex} disabled={Boolean(loadingLabel)}>
-              Prepare index
+          <div className="source-status source-status-row">
+            <span>Current grounding store: {groundingSources.length} document(s) in data/grounding/documents</span>
+            <button className="ghost-button" type="button" onClick={refreshGroundingSources} disabled={Boolean(loadingLabel)}>
+              Refresh folder state
             </button>
           </div>
 
           <div className="rag-paste-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Paste Text Material</p>
-                <h3>Create a grounding document from copied text</h3>
+                <p className="eyebrow">Editable document text</p>
+                <h3>Paste text into the grounding document store</h3>
               </div>
-              <button className="ghost-button" type="button" onClick={() => setPastedGroundingText(defaultGroundingText)}>
-                Use sample text
-              </button>
-            </div>
-            <div className="rag-url-row">
-              <label className="field-label">
-                Filename
-                <input
-                  className="number-input"
-                  value={pastedFilename}
-                  onChange={(event) => setPastedFilename(event.target.value)}
-                />
-              </label>
               <button className="ghost-button" type="button" onClick={savePastedGroundingText} disabled={!pastedGroundingText.trim() || Boolean(loadingLabel)}>
-                Save text
+                Save text document
               </button>
             </div>
-            <textarea
-              className="short-textarea"
-              value={pastedGroundingText}
-              onChange={(event) => setPastedGroundingText(event.target.value)}
-            />
+            <label className="field-label">
+              Filename
+              <input className="number-input" value={pastedFilename} onChange={(event) => setPastedFilename(event.target.value)} />
+            </label>
+            <textarea className="short-textarea" value={pastedGroundingText} onChange={(event) => setPastedGroundingText(event.target.value)} />
+          </div>
+
+          <div className="lifecycle-box">
+            <h3>Choose what to do with the vector database</h3>
+            <div className="operation-options">
+              {(['use_existing', 'recreate', 'update'] as GroundingIndexMode[]).map((mode) => (
+                <label key={mode}>
+                  <input checked={groundingIndexMode === mode} name="learningIndexMode" type="radio" value={mode} onChange={() => setGroundingIndexMode(mode)} />
+                  <span>
+                    <strong>{mode.replace('_', ' ')}</strong>
+                    {mode === 'use_existing' && 'Load saved vectors without chunking or embedding again.'}
+                    {mode === 'recreate' && 'Delete the saved index and rebuild every supplied document.'}
+                    {mode === 'update' && 'Hash documents, skip duplicates, and index new or changed documents.'}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className={`recommendation recommendation-${learningRecommendation?.recommended_operation ?? 'recreate'}`}>
+              <strong>Suggested: {(learningRecommendation?.recommended_operation ?? 'recreate').replace('_', ' ')}</strong>
+              <span>{learningRecommendation?.reason ?? 'Checking saved vector database...'}</span>
+            </div>
+            <div className="helper-callout">
+              Recreate rebuilds the FAISS index from every supported file currently inside <strong>data/grounding/documents</strong>. If a deleted file still appears here, click <strong>Refresh folder state</strong> first.
+            </div>
+            {learningStatus && <div className="registry">
+              <div className="registry-heading">
+                <strong>Saved document registry</strong>
+                <span>{learningStatus.documents.length} document(s) · last updated {learningStatus.updated_at ?? 'unknown'}</span>
+              </div>
+              {learningStatus.documents.length > 0 ? (
+                <div className="table-scroll"><table><thead><tr><th>Filename</th><th>SHA-256 hash</th><th>Chunks</th><th>Indexed at</th></tr></thead><tbody>
+                  {learningStatus.documents.map((document) => (
+                    <tr key={document.filename}><td>{document.filename}</td><td><code>{document.file_hash}</code></td><td>{document.chunk_count}</td><td>{document.indexed_at}</td></tr>
+                  ))}
+                </tbody></table></div>
+              ) : <p className="muted-line">No document registry entries yet.</p>}
+            </div>}
           </div>
 
           <div className="rag-chunk-grid">
-            <label className="field-label">
-              Chunk size
-              <input
-                className="number-input"
-                max={4000}
-                min={200}
-                step={50}
-                type="number"
-                value={chunkSize}
-                onChange={(event) => setChunkSize(Number(event.target.value))}
-              />
-            </label>
-            <label className="field-label">
-              Chunk overlap
-              <input
-                className="number-input"
-                max={1000}
-                min={0}
-                step={25}
-                type="number"
-                value={chunkOverlap}
-                onChange={(event) => setChunkOverlap(Number(event.target.value))}
-              />
-            </label>
-            <div className="helper-callout">
-              Default: chunk size <strong>900</strong>, overlap <strong>150</strong>. Smaller chunks retrieve focused facts; larger chunks keep more surrounding context.
+            <label className="field-label">Chunk size in characters<input className="number-input" max={4000} min={200} step={10} type="number" value={chunkSize} onChange={(event) => setChunkSize(Number(event.target.value))} onBlur={refreshRecommendation} /></label>
+            <label className="field-label">Overlap in characters<input className="number-input" max={1000} min={0} step={10} type="number" value={chunkOverlap} onChange={(event) => setChunkOverlap(Number(event.target.value))} onBlur={refreshRecommendation} /></label>
+            <div className="button-row">
+              <button className="primary-button" type="button" onClick={prepareGroundingIndex} disabled={Boolean(loadingLabel)}>Run selected indexing operation</button>
+              <button className="ghost-button" type="button" onClick={inspectExistingIndex} disabled={Boolean(loadingLabel)}>Inspect existing</button>
             </div>
-          </div>
-
-          <div className="rag-url-row">
-            <label className="field-label">
-              Online material URL
-              <input
-                className="number-input"
-                placeholder="https://example.com/verified-material.txt"
-                type="url"
-                value={groundingUrl}
-                onChange={(event) => setGroundingUrl(event.target.value)}
-              />
-            </label>
-            <button className="ghost-button" type="button" onClick={addGroundingUrl} disabled={!groundingUrl.trim() || Boolean(loadingLabel)}>
-              Add URL
-            </button>
-            <button className="ghost-button" type="button" onClick={refreshGroundingSources} disabled={Boolean(loadingLabel)}>
-              Refresh
-            </button>
           </div>
 
           {loadingLabel && <div className="status loading">{loadingLabel}...</div>}
           {error && <div className="status error">{error}</div>}
+        </div>
 
-          <div className="rag-preview-actions">
-            <button className="ghost-button" type="button" onClick={() => setShowGroundingSources((value) => !value)}>
-              {showGroundingSources ? 'Hide grounding documents' : 'Show grounding documents'}
-            </button>
-            <button className="ghost-button" type="button" onClick={() => setShowVectorPreview((value) => !value)}>
-              {showVectorPreview ? 'Hide vector database chunks' : 'Show vector database chunks'}
-            </button>
-          </div>
-
-          {showGroundingSources && <div className="grounding-source-list rag-source-list">
-            <strong>Current grounding documents</strong>
-            {groundingSources.length === 0 && <small>No grounding documents uploaded yet.</small>}
-            {groundingSources.map((source) => (
-              <div key={source.filename}>
-                <span>{source.filename}</span>
-                <small>
-                  {source.indexed ? 'Indexed' : 'Not indexed'} · {source.chunk_count} chunks · {source.hash.slice(0, 10)}
-                </small>
-              </div>
-            ))}
-          </div>}
-
-          {showVectorPreview && <div className="rag-vector-table">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Vector Database Preview</p>
-                <h3>Chunked texts inside FAISS</h3>
-              </div>
-              <span className="score-badge">{groundingChunks.length} chunks shown</span>
+        {learningIndex && <>
+          <section className="rag-learning-section">
+            <div className="panel-heading"><div><p className="eyebrow">2</p><h3>Model and indexing steps</h3></div></div>
+            <div className="stats-grid">
+              {[
+                [String(learningIndex.model.name ?? '-'), 'embedding model'],
+                [String(learningIndex.model.dimensions ?? '-'), 'vector dimensions'],
+                [String(learningIndex.splitter.chunk_count ?? '-'), 'created chunks'],
+                [String(learningIndex.faiss.index_class ?? '-'), 'FAISS index class'],
+                [String(learningIndex.faiss.metric_type ?? '-'), 'distance metric'],
+                [String(learningIndex.faiss.total_vectors ?? '-'), 'stored vectors'],
+              ].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
             </div>
-            {groundingChunks.length === 0 ? (
-              <p className="empty">No indexed chunks found. Upload documents and prepare the index to inspect vector database content.</p>
-            ) : (
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Index</th>
-                      <th>Source</th>
-                      <th>Document ID</th>
-                      <th>Hash</th>
-                      <th>Length</th>
-                      <th>Chunked text</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {groundingChunks.map((chunk) => (
-                      <tr key={`${chunk.index}-${chunk.document_id}`}>
-                        <td>{chunk.index}</td>
-                        <td>{chunk.source}</td>
-                        <td>{chunk.document_id.slice(0, 12)}</td>
-                        <td>{chunk.hash.slice(0, 12)}</td>
-                        <td>{chunk.chunk_length}</td>
-                        <td>{chunk.chunk_preview}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>}
+            <div className="rag-step-grid">{learningIndex.indexing_steps.map((step, index) => <article key={step}><span>{index + 1}</span><p>{step}</p></article>)}</div>
+          </section>
 
-          <div className="rag-retrieval-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Retrieval Preview</p>
-                <h3>See the context that would be sent to the LLM</h3>
-              </div>
+          <section className="rag-learning-section">
+            <div className="panel-heading"><div><p className="eyebrow">3</p><h3>Recursive chunking steps</h3></div><span className="score-badge">{learningIndex.records.length} chunks</span></div>
+            <div className="split-explanation">
+              <h3>Separators tried in order</h3>
+              <div className="separators">{(learningIndex.splitter.separators_tried_in_order as string[] ?? []).map((separator, index) => <span key={`${separator}-${index}`}><b>{index + 1}</b>{readableSeparator(separator)}</span>)}</div>
+              <p>{String(learningIndex.splitter.how_it_works ?? '')}</p>
             </div>
-            <div className="rag-retrieval-grid">
-              <label className="field-label">
-                Retrieval query
-                <input
-                  className="number-input"
-                  value={retrievalQuery}
-                  onChange={(event) => setRetrievalQuery(event.target.value)}
-                />
-              </label>
-              <label className="field-label">
-                Top K
-                <input
-                  className="number-input"
-                  max={20}
-                  min={1}
-                  type="number"
-                  value={retrievalTopK}
-                  onChange={(event) => setRetrievalTopK(Number(event.target.value))}
-                />
-              </label>
-              <button className="ghost-button" type="button" onClick={previewRetrievedContext} disabled={!retrievalQuery.trim() || Boolean(loadingLabel)}>
-                Retrieve context
-              </button>
-              <button className="ghost-button" type="button" onClick={() => setShowRetrievedContext((value) => !value)}>
-                {showRetrievedContext ? 'Hide context' : 'Show context'}
-              </button>
-            </div>
-            {showRetrievedContext && <div className="rag-context-list">
-              {retrievedContext.length === 0 && <p className="empty">No retrieved context yet. Prepare the index, then retrieve context.</p>}
-              {retrievedContext.map((item, index) => (
-                <article key={`${item.source}-${index}`}>
-                  <span>Context {index + 1} · {item.source}</span>
-                  <p>{item.text}</p>
+            <div className="chunking-records">
+              {learningIndex.records.map((record) => (
+                <article className="chunking-card" key={record.document_id}>
+                  <div className="chunk-range"><strong>Chunk {record.faiss_position}</strong><span>{String(record.metadata.source ?? 'unknown')}</span><span>characters {record.chunking.start_character}-{record.chunking.end_character}</span><span>{record.chunking.character_count} characters</span></div>
+                  {record.chunking.overlap_character_count > 0 ? <div className="overlap"><strong>Repeated from previous chunk ({record.chunking.overlap_character_count} characters)</strong><code>{record.chunking.overlap_text}</code></div> : <div className="overlap no-overlap">First chunk has no previous overlap.</div>}
+                  <p>{record.text}</p>
                 </article>
               ))}
-            </div>}
+            </div>
+          </section>
+
+          <section className="rag-learning-section">
+            <div className="panel-heading"><div><p className="eyebrow">4</p><h3>Chunk tokens and semantic embeddings</h3></div></div>
+            <div className="rag-preview-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowVectorPreview((value) => !value)}>{showVectorPreview ? 'Hide token/vector records' : 'Show token/vector records'}</button>
+              <button className="ghost-button" type="button" onClick={() => setShowSavedFiles((value) => !value)}>{showSavedFiles ? 'Hide saved FAISS files' : 'Show saved FAISS files'}</button>
+            </div>
+            {showVectorPreview && <div className="records-grid">{learningIndex.records.map((record) => <article className="record-card" key={`vector-${record.document_id}`}><div className="record-title"><strong>FAISS position {record.faiss_position}</strong><code>{record.document_id}</code></div><p>{record.text}</p><div className="metadata">Metadata: <code>{JSON.stringify(record.metadata)}</code></div><details><summary>Tokenizer output: {record.tokenization.tokens.length} tokens</summary><div className="tokens">{record.tokenization.tokens.map((token, index) => <span key={`${record.document_id}-${token}-${index}`} title={`ID ${record.tokenization.token_ids[index]}`}>{token}</span>)}</div></details><details><summary>384-dimensional semantic embedding</summary><VectorStats vector={record.vector} /><p className="muted-line">Individual dimensions do not correspond to named words. Meaning is distributed across the full vector.</p></details><div className="coordinate">2D teaching projection: ({record.pca_2d.join(', ')})</div></article>)}</div>}
+          </section>
+
+          {showSavedFiles && <section className="rag-learning-section">
+            <div className="panel-heading"><div><p className="eyebrow">5</p><h3>What FAISS and LangChain store</h3></div></div>
+            <div className="file-grid">{Object.entries(learningIndex.saved_files).map(([key, file]) => <article className="file-card" key={key}><strong>{file.path.split('/').pop()}</strong><span>{file.size_bytes} bytes</span><p>{file.stores}</p>{file.does_not_store && <p className="warning">Does not store: {file.does_not_store}</p>}{file.security_note && <p className="warning">{file.security_note}</p>}<details><summary>Show details</summary><pre>{JSON.stringify(file.details, null, 2)}</pre></details></article>)}</div>
+            <h3>FAISS position {'->'} LangChain document mapping</h3>
+            <div className="table-scroll"><table><thead><tr><th>FAISS position</th><th>Document ID</th><th>Metadata</th><th>Text</th></tr></thead><tbody>{learningIndex.records.map((record) => <tr key={`map-${record.document_id}`}><td>{record.faiss_position}</td><td><code>{record.document_id}</code></td><td><code>{JSON.stringify(record.metadata)}</code></td><td>{record.text}</td></tr>)}</tbody></table></div>
+          </section>}
+        </>}
+
+        <div className="rag-retrieval-panel">
+          <div className="panel-heading"><div><p className="eyebrow">6</p><h3>Embed a question and search FAISS</h3><p className="muted-line">Try a paraphrase whose exact words do not appear in the document.</p></div></div>
+          <div className="rag-retrieval-grid model-search-grid">
+            <label className="field-label">Question<input className="number-input" value={retrievalQuery} onChange={(event) => setRetrievalQuery(event.target.value)} /></label>
+            <label className="field-label">Top K<input className="number-input" max={10} min={1} type="number" value={retrievalTopK} onChange={(event) => setRetrievalTopK(Number(event.target.value))} /></label>
+            <label className="field-label">Maximum L2 distance<input className="number-input" max={10} min={0} step={0.1} type="number" value={maximumL2Distance} onChange={(event) => setMaximumL2Distance(Number(event.target.value))} /></label>
+            <button className="ghost-button" type="button" onClick={previewRetrievedContext} disabled={!retrievalQuery.trim() || Boolean(loadingLabel)}>Embed question and retrieve</button>
           </div>
+          {showRetrievedContext && learningSearch && <div className="search-learning-results">
+            <div className="stats-grid">{[[learningSearch.tokenization.tokens.length, 'question tokens'], [learningSearch.query_vector.dimensions, 'embedding dimensions'], [learningSearch.query_vector.magnitude, 'query magnitude'], [learningSearch.nearest_neighbors.length, 'nearest neighbors returned'], [learningSearch.results.length, 'neighbors accepted as relevant']].map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
+            <h3>Question tokens</h3>
+            <div className="tokens">{learningSearch.tokenization.tokens.map((token, index) => <span key={`${token}-${index}`}>{token}</span>)}</div>
+            <h3>Retrieval steps</h3>
+            <div className="rag-step-grid">{learningSearch.retrieval_steps.map((step, index) => <article key={step}><span>{index + 1}</span><p>{step}</p></article>)}</div>
+            <div className={`decision ${learningSearch.has_relevant_context ? 'decision-accept' : 'decision-reject'}`}><strong>{learningSearch.has_relevant_context ? 'Relevant context accepted' : 'No relevant context found'}</strong><p>{learningSearch.retrieval_decision}</p><small>FAISS always returns nearest vectors. The distance threshold decides whether they are relevant enough for an LLM.</small></div>
+            <div className="results-grid">{learningSearch.nearest_neighbors.map((result) => <article className={result.l2_distance <= learningSearch.maximum_l2_distance ? 'accepted-result' : 'rejected-result'} key={`${result.rank}-${result.document_id}`}><div className="rank">Rank {result.rank}</div><h3>FAISS position {result.faiss_position}</h3><div className="distance">Squared L2 distance: <strong>{result.l2_distance}</strong></div><code>Manual check sum(query_i - chunk_i)^2 = {result.manual_squared_l2}</code><p>{result.text}</p><div className="result-decision">{result.l2_distance <= learningSearch.maximum_l2_distance ? 'Accepted as relevant' : 'Rejected as too distant'}</div><small>LangChain document ID: {result.document_id}</small></article>)}</div>
+            <div className="context-preview"><h3>Context that would be sent to Mistral or another LLM</h3><pre>{learningSearch.context_for_llm || "No context sent to the LLM. Safe answer: I don't know based on the indexed document."}</pre></div>
+          </div>}
         </div>
 
         <div className="rag-learning-section">

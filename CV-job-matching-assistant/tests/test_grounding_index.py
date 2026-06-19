@@ -52,3 +52,44 @@ class GroundingIndexTests(TestCase):
             unique = grounding_index._unique_documents_by_hash([first, second])
 
         self.assertEqual(unique, [first])
+
+    def test_registry_payload_uses_configuration_and_chunk_ids(self):
+        payload = grounding_index._registry_payload(
+            [
+                {
+                    "filename": "notes.txt",
+                    "file_hash": "abc123",
+                    "chunk_count": 2,
+                    "chunk_ids": ["chunk-a", "chunk-b"],
+                    "indexed_at": "2026-06-10T13:57:35+00:00",
+                }
+            ],
+            chunk_size=220,
+            chunk_overlap=40,
+        )
+
+        self.assertEqual(
+            payload["configuration"]["embedding_model"],
+            "sentence-transformers/all-MiniLM-L6-v2",
+        )
+        self.assertEqual(payload["configuration"]["embedding_dimensions"], 384)
+        self.assertEqual(payload["configuration"]["splitter"], "RecursiveCharacterTextSplitter")
+        self.assertEqual(payload["configuration"]["chunk_size"], 220)
+        self.assertEqual(payload["configuration"]["chunk_overlap"], 40)
+        self.assertEqual(payload["documents"][0]["file_hash"], "abc123")
+        self.assertEqual(payload["documents"][0]["chunk_ids"], ["chunk-a", "chunk-b"])
+        self.assertIn("updated_at", payload)
+
+    def test_registered_file_hash_supports_old_and_new_registry_keys(self):
+        self.assertEqual(grounding_index._registered_file_hash({"file_hash": "new"}), "new")
+        self.assertEqual(grounding_index._registered_file_hash({"hash": "old"}), "old")
+
+    def test_unique_chunks_by_id_removes_duplicate_chunk_ids(self):
+        class Chunk:
+            def __init__(self, chunk_id: str):
+                self.metadata = {"chunk_id": chunk_id}
+                self.page_content = "same"
+
+        unique = grounding_index._unique_chunks_by_id([Chunk("a"), Chunk("a"), Chunk("b")])
+
+        self.assertEqual([chunk.metadata["chunk_id"] for chunk in unique], ["a", "b"])

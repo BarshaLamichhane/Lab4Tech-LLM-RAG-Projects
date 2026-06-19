@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type RefObject } from 'react';
+import { type ChangeEvent, type RefObject } from 'react';
 import { jsPDF } from 'jspdf';
 
 import type {
@@ -25,7 +25,6 @@ interface Props {
   level: PreparationLevel;
   loadingLabel: string;
   maxTurns: number;
-  onAddGroundingUrl: (url: string) => void;
   onAnswerChange: (value: string) => void;
   onBuildGroundingIndex: () => void;
   onCodeChange: (value: string) => void;
@@ -51,7 +50,6 @@ interface Props {
 }
 
 export function AdaptiveInterviewView(props: Props) {
-  const [groundingUrl, setGroundingUrl] = useState('');
   const currentQuestion = props.session?.next_question;
   const completedTurns = props.session?.state.turns.filter((turn) => turn.evaluation).length ?? 0;
   const latestEvaluation = [...(props.session?.state.turns ?? [])].reverse().find((turn) => turn.evaluation)?.evaluation;
@@ -106,24 +104,6 @@ export function AdaptiveInterviewView(props: Props) {
                     </select>
                     <button className="ghost-button" type="button" disabled={Boolean(props.loadingLabel)} onClick={props.onBuildGroundingIndex}>
                       Prepare index
-                    </button>
-                  </div>
-                  <div className="grounding-action-row">
-                    <input
-                      placeholder="HTTPS link to verified material"
-                      value={groundingUrl}
-                      onChange={(event) => setGroundingUrl(event.target.value)}
-                    />
-                    <button
-                      className="ghost-button"
-                      type="button"
-                      disabled={!groundingUrl.trim() || Boolean(props.loadingLabel)}
-                      onClick={() => {
-                        props.onAddGroundingUrl(groundingUrl.trim());
-                        setGroundingUrl('');
-                      }}
-                    >
-                      Add link
                     </button>
                   </div>
                   <label><span className="field-label">Optional grounding query</span><input placeholder="e.g. LangGraph checkpoints or company policy" value={props.groundingQuery} onChange={(event) => props.onGroundingQueryChange(event.target.value)} /></label>

@@ -1,6 +1,12 @@
 {
   "profiles": [
     {
+      "role": "AI Engineer",
+      "company": "",
+      "file": "ai_engineer_unknown_company_2026.json",
+      "created_at": "2026-06-19"
+    },
+    {
       "role": "AI Research Scientist",
       "company": "Giotto.ai",
       "file": "ai_research_scientist_giotto_ai_2026.json",

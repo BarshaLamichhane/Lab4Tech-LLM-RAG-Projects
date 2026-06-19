@@ -153,6 +153,7 @@ export interface GroundingChunk {
   document_id: string;
   source: string;
   hash: string;
+  chunk_id: string;
   chunk_preview: string;
   chunk_length: number;
 }
@@ -160,6 +161,117 @@ export interface GroundingChunk {
 export interface GroundingContextChunk {
   source: string;
   text: string;
+}
+
+export interface GroundingLearningStatus {
+  has_existing_vector_database: boolean;
+  configuration: Record<string, unknown>;
+  documents: Array<{
+    filename: string;
+    file_hash: string;
+    chunk_count: number;
+    chunk_ids: string[];
+    indexed_at: string;
+  }>;
+  updated_at?: string | null;
+  document_directory: string;
+  index_directory: string;
+}
+
+export interface GroundingLearningRecommendation {
+  recommended_operation: GroundingIndexMode;
+  reason: string;
+  configuration: Record<string, unknown>;
+  document_count: number;
+  changed_configuration_fields?: string[];
+  new_documents?: string[];
+  changed_documents?: string[];
+  removed_documents?: string[];
+}
+
+export interface GroundingLearningVector {
+  dimensions: number;
+  first_16_values: number[];
+  minimum: number;
+  maximum: number;
+  mean: number;
+  magnitude: number;
+  non_zero_values: number;
+}
+
+export interface GroundingLearningRecord {
+  faiss_position: number;
+  document_id: string;
+  text: string;
+  metadata: Record<string, unknown>;
+  chunking: {
+    start_character: number;
+    end_character: number;
+    character_count: number;
+    overlap_text: string;
+    overlap_character_count: number;
+  };
+  tokenization: {
+    tokens: string[];
+    token_ids: number[];
+    attention_mask: number[];
+  };
+  vector: GroundingLearningVector;
+  pca_2d: number[];
+}
+
+export interface GroundingLearningIndexPayload {
+  model: Record<string, unknown>;
+  indexing_steps: string[];
+  splitter: Record<string, unknown>;
+  faiss: Record<string, unknown>;
+  records: GroundingLearningRecord[];
+  saved_files: Record<string, {
+    path: string;
+    size_bytes: number;
+    stores: string;
+    does_not_store?: string;
+    security_note?: string;
+    details: unknown;
+  }>;
+  operation: Record<string, unknown>;
+  registry: Record<string, unknown>;
+}
+
+export interface GroundingLearningSearchResult {
+  question: string;
+  tokenization: {
+    tokens: string[];
+    token_ids: number[];
+    attention_mask: number[];
+  };
+  query_vector: GroundingLearningVector;
+  retrieval_steps: string[];
+  maximum_l2_distance: number;
+  nearest_neighbors: Array<{
+    rank: number;
+    faiss_position: number;
+    document_id: string;
+    l2_distance: number;
+    manual_squared_l2: number;
+    text: string;
+    metadata: Record<string, unknown>;
+    chunk_vector_first_16: number[];
+  }>;
+  results: Array<{
+    rank: number;
+    faiss_position: number;
+    document_id: string;
+    l2_distance: number;
+    manual_squared_l2: number;
+    text: string;
+    metadata: Record<string, unknown>;
+    chunk_vector_first_16: number[];
+  }>;
+  has_relevant_context: boolean;
+  retrieval_decision: string;
+  safe_answer: string;
+  context_for_llm: string;
 }
 
 export interface LearningPathItem {

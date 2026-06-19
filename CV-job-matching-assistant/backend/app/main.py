@@ -78,12 +78,17 @@ from backend.interview.preparation_interview import (
 )
 from backend.interview.progress_dashboard import build_adaptive_progress_dashboard, build_progress_dashboard
 from backend.interview.grounding_index import (
+    build_grounding_learning_index_payload,
     ensure_grounding_index,
+    grounding_learning_recommendation,
+    grounding_learning_status,
+    inspect_grounding_learning_index,
     list_grounding_index_chunks,
     list_grounding_sources,
     retrieve_grounding_context,
     save_grounding_document,
     save_grounding_url,
+    search_grounding_learning_context,
 )
 from backend.interview.schemas import (
     AdaptiveInterviewAnswerRequest,
@@ -95,6 +100,8 @@ from backend.interview.schemas import (
     CodeRunResponse,
     EvaluateAnswerRequest,
     GroundingIndexRequest,
+    GroundingLearningRecommendationRequest,
+    GroundingLearningSearchRequest,
     GroundingRetrievalRequest,
     GroundingTextRequest,
     GroundingUrlRequest,
@@ -360,6 +367,62 @@ def retrieve_grounding_preview(
     _ensure_admin(user)
     try:
         return retrieve_grounding_context(request.query, request.top_k)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/interview/grounding/learning/status")
+def get_grounding_learning_status(user: CurrentUser = Depends(require_user)) -> dict:
+    _ensure_admin(user)
+    return grounding_learning_status()
+
+
+@app.post("/api/interview/grounding/learning/recommendation")
+def get_grounding_learning_recommendation(
+    request: GroundingLearningRecommendationRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    _ensure_admin(user)
+    return grounding_learning_recommendation(request.chunk_size, request.chunk_overlap)
+
+
+@app.post("/api/interview/grounding/learning/index")
+def build_grounding_learning_index(
+    request: GroundingIndexRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    _ensure_admin(user)
+    try:
+        return build_grounding_learning_index_payload(
+            request.mode,
+            request.chunk_size,
+            request.chunk_overlap,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/interview/grounding/learning/index")
+def inspect_grounding_learning(user: CurrentUser = Depends(require_user)) -> dict:
+    _ensure_admin(user)
+    try:
+        return inspect_grounding_learning_index()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/interview/grounding/learning/search")
+def search_grounding_learning(
+    request: GroundingLearningSearchRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    _ensure_admin(user)
+    try:
+        return search_grounding_learning_context(
+            request.query,
+            request.top_k,
+            request.maximum_l2_distance,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

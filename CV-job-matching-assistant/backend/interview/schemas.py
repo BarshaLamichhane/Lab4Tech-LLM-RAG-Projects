@@ -166,6 +166,17 @@ class GroundingRetrievalRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=20)
 
 
+class GroundingLearningRecommendationRequest(BaseModel):
+    chunk_size: int = Field(default=900, ge=200, le=4000)
+    chunk_overlap: int = Field(default=150, ge=0, le=1000)
+
+
+class GroundingLearningSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    top_k: int = Field(default=3, ge=1, le=10)
+    maximum_l2_distance: float = Field(default=1.2, ge=0, le=10)
+
+
 class PreparationInterviewResponse(BaseModel):
     role: str
     selected_skills: list[str]

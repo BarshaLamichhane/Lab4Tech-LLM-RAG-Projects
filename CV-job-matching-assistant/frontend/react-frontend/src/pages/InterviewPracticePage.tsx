@@ -15,7 +15,6 @@ import {
   runPythonCode,
   updateInterviewSession,
   uploadGroundingDocuments,
-  uploadGroundingUrl,
   uploadText,
 } from '../api';
 import type {
@@ -622,14 +621,6 @@ export function InterviewPracticePage() {
     });
   }
 
-  async function addGroundingUrl(url: string) {
-    await runTask('Adding online grounding material', async () => {
-      const result = await uploadGroundingUrl(url);
-      setGroundingSources(result.sources);
-      setGroundingIndexMode('update');
-    });
-  }
-
   async function prepareGroundingIndex() {
     await runTask('Preparing grounding index', async () => {
       const result = await buildGroundingIndex(groundingIndexMode);
@@ -676,7 +667,6 @@ export function InterviewPracticePage() {
       onCvBlur={handleCvBlur}
       onEvaluateAnswer={evaluateCurrentAnswer}
       onGeneratePlan={generatePlan}
-      onAddGroundingUrl={addGroundingUrl}
       onBuildGroundingIndex={prepareGroundingIndex}
       onGenerationStrategyChange={setGenerationStrategy}
       onGroundingIndexModeChange={setGroundingIndexMode}

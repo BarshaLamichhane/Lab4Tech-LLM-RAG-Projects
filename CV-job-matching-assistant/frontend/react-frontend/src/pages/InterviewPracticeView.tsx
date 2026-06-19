@@ -45,7 +45,6 @@ interface InterviewPracticeViewProps {
   groundingSources: GroundingSource[];
   companyContext: Record<string, string>;
   useCompanyContext: boolean;
-  onAddGroundingUrl: (url: string) => void;
   onBuildGroundingIndex: () => void;
   onGenerationStrategyChange: (strategy: QuestionGenerationStrategy) => void;
   onGroundingIndexModeChange: (mode: GroundingIndexMode) => void;
@@ -118,7 +117,6 @@ export function InterviewPracticeView({
   groundingSources,
   companyContext,
   useCompanyContext,
-  onAddGroundingUrl,
   onBuildGroundingIndex,
   onGenerationStrategyChange,
   onGroundingIndexModeChange,
@@ -165,7 +163,6 @@ export function InterviewPracticeView({
 }: InterviewPracticeViewProps) {
   const [revealedGuidance, setRevealedGuidance] = useState<Set<string>>(new Set());
   const [revealedHints, setRevealedHints] = useState<Set<string>>(new Set());
-  const [groundingUrl, setGroundingUrl] = useState('');
   const availableSkillFocuses = SKILL_FOCUS_OPTIONS.filter(
     (option) => (skillGroups[option.value]?.length ?? 0) > 0,
   );
@@ -343,24 +340,6 @@ export function InterviewPracticeView({
                   </select>
                   <button className="ghost-button" type="button" disabled={loading} onClick={onBuildGroundingIndex}>
                     Prepare index
-                  </button>
-                </div>
-                <div className="grounding-action-row">
-                  <input
-                    placeholder="HTTPS link to verified material"
-                    value={groundingUrl}
-                    onChange={(event) => setGroundingUrl(event.target.value)}
-                  />
-                  <button
-                    className="ghost-button"
-                    type="button"
-                    disabled={!groundingUrl.trim() || loading}
-                    onClick={() => {
-                      onAddGroundingUrl(groundingUrl.trim());
-                      setGroundingUrl('');
-                    }}
-                  >
-                    Add link
                   </button>
                 </div>
                 <label>

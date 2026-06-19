@@ -13,6 +13,10 @@ import type {
   GroundingContextChunk,
   GroundingIndexMode,
   GroundingChunk,
+  GroundingLearningIndexPayload,
+  GroundingLearningRecommendation,
+  GroundingLearningSearchResult,
+  GroundingLearningStatus,
   GroundingSource,
   InterviewPracticeSession,
   InterviewPracticeSessionPayload,
@@ -340,6 +344,50 @@ export function retrieveGroundingPreview(query: string, topK = 5): Promise<Groun
   return requestJson<GroundingContextChunk[]>('/api/interview/grounding/retrieve', {
     method: 'POST',
     body: JSON.stringify({ query, top_k: topK }),
+  });
+}
+
+export function getGroundingLearningStatus(): Promise<GroundingLearningStatus> {
+  return requestJson<GroundingLearningStatus>('/api/interview/grounding/learning/status');
+}
+
+export function getGroundingLearningRecommendation(
+  chunkSize = 900,
+  chunkOverlap = 150,
+): Promise<GroundingLearningRecommendation> {
+  return requestJson<GroundingLearningRecommendation>('/api/interview/grounding/learning/recommendation', {
+    method: 'POST',
+    body: JSON.stringify({ chunk_size: chunkSize, chunk_overlap: chunkOverlap }),
+  });
+}
+
+export function buildGroundingLearningIndex(
+  mode: GroundingIndexMode,
+  chunkSize = 900,
+  chunkOverlap = 150,
+): Promise<GroundingLearningIndexPayload> {
+  return requestJson<GroundingLearningIndexPayload>('/api/interview/grounding/learning/index', {
+    method: 'POST',
+    body: JSON.stringify({ mode, chunk_size: chunkSize, chunk_overlap: chunkOverlap }),
+  });
+}
+
+export function inspectGroundingLearningIndex(): Promise<GroundingLearningIndexPayload> {
+  return requestJson<GroundingLearningIndexPayload>('/api/interview/grounding/learning/index');
+}
+
+export function searchGroundingLearningContext(
+  query: string,
+  topK = 3,
+  maximumL2Distance = 1.2,
+): Promise<GroundingLearningSearchResult> {
+  return requestJson<GroundingLearningSearchResult>('/api/interview/grounding/learning/search', {
+    method: 'POST',
+    body: JSON.stringify({
+      query,
+      top_k: topK,
+      maximum_l2_distance: maximumL2Distance,
+    }),
   });
 }
 

@@ -1886,6 +1886,380 @@ select:focus {
   text-transform: none;
 }
 
+.model-rag-lab {
+  background: #ffffff;
+}
+
+.input-options,
+.operation-options {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.input-options article,
+.operation-options label,
+.lifecycle-box,
+.split-explanation,
+.record-card,
+.file-card,
+.results-grid article {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.input-options article {
+  display: grid;
+  gap: 8px;
+  padding: 15px;
+}
+
+.input-options p,
+.operation-options span,
+.split-explanation p,
+.record-card p,
+.file-card p,
+.results-grid p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.source-status {
+  background: #edf5ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 10px 12px;
+}
+
+.source-status-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.source-status-row .ghost-button {
+  min-height: 34px;
+}
+
+.lifecycle-box {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.lifecycle-box h3,
+.split-explanation h3,
+.search-learning-results h3 {
+  color: var(--text);
+  font-size: 1rem;
+  margin: 0;
+  text-transform: none;
+}
+
+.operation-options label {
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+
+.operation-options input {
+  margin-top: 4px;
+  width: auto;
+}
+
+.operation-options span {
+  display: grid;
+  gap: 4px;
+  font-size: 0.84rem;
+}
+
+.operation-options strong {
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.recommendation,
+.registry {
+  border-radius: 9px;
+  padding: 12px;
+}
+
+.recommendation {
+  background: #edf5ff;
+  color: #31506f;
+  display: grid;
+  gap: 4px;
+}
+
+.recommendation-recreate {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.recommendation-update {
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.recommendation-use_existing {
+  background: #eff6ff;
+  color: var(--accent-strong);
+}
+
+.registry {
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+
+.registry-heading {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.registry-heading span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.stats-grid,
+.vector-stats {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.stats-grid div,
+.vector-stats div {
+  background: #f5f9ff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+}
+
+.stats-grid strong,
+.vector-stats strong {
+  color: var(--accent-strong);
+  overflow-wrap: anywhere;
+}
+
+.stats-grid span,
+.vector-stats span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.split-explanation {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.separators,
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.separators span,
+.tokens span {
+  background: var(--accent-soft);
+  border-radius: 7px;
+  color: #314466;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  padding: 6px 8px;
+}
+
+.separators b {
+  background: var(--accent);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-grid;
+  height: 22px;
+  margin-right: 6px;
+  place-items: center;
+  width: 22px;
+}
+
+.chunking-records,
+.records-grid,
+.results-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.chunking-card {
+  background: #fbfdff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.chunk-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.chunk-range span {
+  background: #eef4fb;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 5px 7px;
+}
+
+.overlap {
+  background: #fff7ed;
+  border-radius: 8px;
+  color: #9a3412;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.overlap code {
+  display: block;
+  margin-top: 5px;
+}
+
+.no-overlap {
+  background: #eef4fb;
+  color: var(--muted);
+}
+
+.record-card,
+.file-card,
+.results-grid article {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.record-title {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.record-title code,
+.metadata code,
+.file-card pre,
+.table-scroll code {
+  overflow-wrap: anywhere;
+}
+
+.metadata,
+.coordinate {
+  background: #eef4fb;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  padding: 9px;
+}
+
+.file-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.file-card pre {
+  background: #102033;
+  border-radius: 8px;
+  color: #e8f2ff;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.warning {
+  color: #9a3412 !important;
+}
+
+.model-search-grid {
+  grid-template-columns: minmax(0, 1fr) 110px 180px auto;
+}
+
+.search-learning-results {
+  display: grid;
+  gap: 14px;
+}
+
+.decision,
+.context-preview {
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.decision-accept {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.decision-reject {
+  background: #fff1f0;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.distance {
+  background: #ecfdf5;
+  border-radius: 7px;
+  color: #166534;
+  padding: 9px;
+}
+
+.accepted-result {
+  border-left: 4px solid var(--good) !important;
+}
+
+.rejected-result {
+  border-left: 4px solid var(--danger) !important;
+  opacity: 0.78;
+}
+
+.result-decision {
+  background: #eef4fb;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 6px 8px;
+  width: fit-content;
+}
+
+.context-preview {
+  background: #102033;
+  color: #ffffff;
+}
+
+.context-preview h3 {
+  color: #ffffff;
+}
+
+.context-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 .rag-control-grid {
   align-items: end;
   display: grid;
@@ -1959,7 +2333,7 @@ select:focus {
 }
 
 .rag-vector-table table {
-  min-width: 1100px;
+  min-width: 1220px;
 }
 
 .rag-vector-table td:last-child {
@@ -2559,6 +2933,12 @@ pre {
   .rag-chunk-grid,
   .rag-url-row,
   .rag-retrieval-grid,
+  .model-search-grid,
+  .input-options,
+  .operation-options,
+  .stats-grid,
+  .vector-stats,
+  .file-grid,
   .flag-source-grid,
   .criteria-flow,
   .criteria-result-grid,
