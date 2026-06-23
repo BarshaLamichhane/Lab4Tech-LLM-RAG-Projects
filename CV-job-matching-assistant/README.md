@@ -321,12 +321,25 @@ python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 On Mac/Linux, find and stop the process using port `8000`:
 
 ```bash
-lsof -i :8000
+lsof -nP -iTCP:8000 -sTCP:LISTEN
+```
+it will show PID and then do 
+
+```bash
 kill <PID>
 ```
-or 
+if it doesnt stop do 
+```bash 
+kill -9 <PID>
+```
+or  one line version 
 ```bash
 lsof -tiTCP:<portno> -sTCP:LISTEN | xargs kill -9
+```
+or one line version
+```bash
+kill -9 $(lsof -tiTCP:8000 -sTCP:LISTEN)
+kill -9 $(lsof -tiTCP:5173 -sTCP:LISTEN)
 ```
 port no can be 8000, 8001 etc
 for example 
