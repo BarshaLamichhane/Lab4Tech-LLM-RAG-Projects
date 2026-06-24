@@ -1,38 +1,79 @@
 
-# Lab4Tech CV-to-Job Matching Assistant
+# HireReadyAI - CV-to-Job Matching and Interview Assistant
 
-AI-powered CV analysis and career guidance system using LLM + RAG concepts.
+AI-powered CV analysis, job matching, personalized learning, and interview preparation platform using LLM + RAG concepts.
 
-This project allows users to upload a CV, compare it against a target job role, calculate a match percentage, identify missing skills, and suggest alternative suitable career paths.
+This project allows users to upload a CV, compare it against a target job role, calculate a match percentage, identify missing skills, generate a personalized learning path, and practise interview questions with scored feedback.
 
+The system supports company-context-aware interview generation, adaptive interview practice, coding-question execution, and RAG-grounded questions from uploaded learning material.
 
 # Features
 
-✅ Upload CV in PDF format  
-✅ Extract text from CV  
-✅ Detect technical skills automatically  
-✅ Compare CV against selected job role  
-✅ Generate job match percentage  
-✅ Show matching and missing skills  
-✅ Suggest alternative suitable roles  
-✅ RAG-ready architecture for verified knowledge retrieval  
-✅ Privacy-aware prototype aligned with Swiss AI recommendations
+✅ Upload CV in PDF/TXT format  
+✅ Extract skills from CV text, projects, and experience sections  
+✅ Extract job skills from job descriptions using Mistral  
+✅ Capture company context from job descriptions, including company name, industry domain, company context, and business problem  
+✅ Compare CV skills against saved or newly extracted job roles  
+✅ Calculate weighted match score with admin-adjustable skill weights  
+✅ Show matched and missing skills by category  
+✅ Generate score explanation and category-wise match details  
+✅ Generate personalized learning paths from skill gaps and interview performance  
+✅ Interview Preparation Mode for focused single-skill practice  
+✅ Company-context-aware interview generation for realistic organization-specific questions  
+✅ Adaptive Interview Mode that switches skills based on learner performance  
+✅ LLM-based answer scoring with rubric, test-based, and grounded evaluation strategies  
+✅ Python coding-question runner for live coding practice  
+✅ RAG-grounded question generation from uploaded learning material  
+✅ FAISS vector index lifecycle: use existing, update, or recreate  
+✅ Admin-only RAG learning dashboard showing document ingestion, chunking, embeddings, FAISS storage, retrieval, and context sent to the LLM  
+✅ Authentication, admin/user roles, settings, and deployable backend/frontend structure  
+✅ Privacy-aware prototype aligned with AI governance principles
 
 
 # Project Architecture
 
 ```text
-User Uploads CV
+CV + Job Description
         ↓
-PDF Text Extraction
+Text Extraction
         ↓
-Skill Extraction
+CV Skill Extraction + Job Skill Extraction
         ↓
-Job Role Requirement Retrieval
+Skill Normalization and Alias Matching
         ↓
-Match Score Calculation
+Weighted Match Score + Skill Gap Analysis
         ↓
-AI Explanation + Suggestions
+Personalized Learning Path
+        ↓
+Interview Preparation / Adaptive Interview
+        ↓
+Rubric Scoring + Test-Based Scoring + Grounded RAG Scoring
+        ↓
+Feedback + Reports + Next Practice Plan
+```
+
+## RAG Architecture
+
+```text
+Uploaded Verified Material
+        ↓
+data/grounding/documents/
+        ↓
+LangChain RecursiveCharacterTextSplitter
+        ↓
+HuggingFace sentence-transformers/all-MiniLM-L6-v2
+        ↓
+384-dimensional embeddings
+        ↓
+FAISS vector index
+        ↓
+data/grounding/faiss_index/
+        ↓
+Retrieval Query from Role + Skill + Optional Grounding Query
+        ↓
+Retrieved Context
+        ↓
+Grounded Question Generation / Grounded Answer Evaluation
 ```
 
 ---
@@ -40,27 +81,47 @@ AI Explanation + Suggestions
 # 📂 Project Structure
 
 ```text
-CV-job-matching-assistant/
+HireReadyAI/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI routes
-│   │   ├── schemas.py           # API request/response models
-│   │   └── services.py          # Backend service orchestration
-│   ├── cv/                      # Backend-local CV parsing and skill extraction
-│   ├── job_description/         # Backend-local job skill extraction
-│   ├── matching/                # Backend-local matching engine
-│   └── requirements.txt
+│   │   ├── main.py                  # FastAPI routes
+│   │   ├── auth.py                  # Login, users, admin auth
+│   │   ├── config.py                # Environment configuration
+│   │   ├── schemas.py               # API request/response models
+│   │   ├── services.py              # Backend service orchestration
+│   │   ├── session_store.py         # Saved interview/session data
+│   │   └── llm_client.py            # Mistral/OpenAI provider routing
+│   │
+│   ├── cv/
+│   │   ├── cv_parser.py             # CV PDF/text parsing
+│   │   ├── cv_skill_extractor.py    # CV skill/project extraction
+│   │   └── cv_analyzer.py
+│   │
+│   ├── job_description/
+│   │   ├── job_description_cleaner_mistral_api.py
+│   │   └── job_profile_catalog.py
+│   │
+│   ├── matching/
+│   │   ├── skill_matching_engine.py
+│   │   └── cv_job_matching_pipeline.py
+│   │
+│   └── interview/
+│       ├── preparation_interview.py
+│       ├── adaptive_interview.py
+│       ├── interview_assistant.py
+│       ├── grounding_index.py       # LangChain + FAISS + HuggingFace RAG
+│       ├── grounding_retriever.py
+│       ├── code_runner.py
+│       ├── expected_point_templates.py
+│       └── python_test_case_templates.py
 │
 ├── frontend/
-│   ├── angular-frontend/        # Angular UI
-│   │   ├── angular.json
-│   │   ├── package.json
-│   │   └── src/
-│   ├── react-frontend/          # React UI
+│   ├── react-frontend/              # Current primary React UI
 │   │   ├── index.html
 │   │   ├── package.json
 │   │   └── src/
-│   └── streamlit-ui/            # Existing Streamlit UIs kept for now
+│   ├── angular-frontend/            # Angular UI kept for comparison
+│   └── streamlit-ui/                # Existing Streamlit UIs kept for now
 │       ├── app-cv-job-matching-engine.py
 │       ├── app-cv-job-matching-with-new-job.py
 │       ├── app-job-skill-extractor-mistral-api.py
@@ -68,14 +129,26 @@ CV-job-matching-assistant/
 │
 ├── data/
 │   ├── extracted_skills_mistral-large-latest/
-│   ├── job_roles/
+│   │   ├── index.json
+│   │   └── *_skills.json
+│   ├── job_roles/raw_job_postings/
+│   ├── grounding/
+│   │   ├── documents/
+│   │   ├── faiss_index/
+│   │   └── document_registry.json
 │   └── taxonomies/
 │
 ├── prompts/
-├── vectorstore/
+│   ├── job_description_data_extractor.yml
+│   └── interview_preparation_question_generator.yml
+│
+├── tests/
 ├── requirements.txt
+├── Dockerfile.backend
+├── docker-compose.yml
 ├── README.md
-├── .env
+├── .env.example
+├── .env                         # Local only. Do not commit.
 └── .gitignore
 ```
 
@@ -87,7 +160,7 @@ CV-job-matching-assistant/
 
 ```bash
 git clone https://github.com/BarshaLamichhane/Lab4Tech-llm-rag-projects.git
-cd lab4tech-cv-rag-assistant
+cd Lab4Tech-LLM-RAG-Projects
 ```
 
 ## 2. Create virtual environment
@@ -118,7 +191,7 @@ It should show python inside your venv for example '/Users/barshalamichhane/Docu
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install -r CV-job-matching-assistant/requirements.txt
+python -m pip install -r HireReadyAI/requirements.txt
 ```
 then do 
 ```bash 
@@ -138,7 +211,7 @@ without python -m then your library is not inside venv of your current working d
 
 The current primary application uses the FastAPI backend and React frontend. Run them in two separate terminals.
 
-Create `CV-job-matching-assistant/.env`. The initial admin password is used only when
+Create `HireReadyAI/.env`. The initial admin password is used only when
 the users database is empty:
 
 ```env
@@ -157,7 +230,7 @@ From the repository root, activate the Python virtual environment and start the 
 
 ```bash
 source venv/bin/activate
-cd CV-job-matching-assistant
+cd HireReadyAI
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -165,7 +238,7 @@ python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 
 ```bash
 venv\Scripts\activate
-cd CV-job-matching-assistant
+cd HireReadyAI
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -193,7 +266,7 @@ in HttpOnly cookies. Tokens are never exposed to React or browser local storage.
 Users can rotate their password from the Account page; doing so invalidates existing
 sessions.
 
-Create additional users from the `CV-job-matching-assistant` directory:
+Create additional users from the `HireReadyAI` directory:
 
 ```bash
 python -m backend.app.create_user new-user
@@ -212,12 +285,24 @@ FastAPI documentation is available at:
 http://127.0.0.1:8000/docs
 ```
 
+Useful Swagger endpoints for RAG/vector inspection:
+
+```text
+GET  /api/interview/grounding/sources
+GET  /api/interview/grounding/chunks
+GET  /api/interview/grounding/learning/status
+GET  /api/interview/grounding/learning/index
+POST /api/interview/grounding/learning/search
+```
+
+Some endpoints are admin-only. Login through the React app or call `POST /api/auth/login` from Swagger first.
+
 ## Terminal 2: React frontend
 
 The React frontend does not require the Python virtual environment.
 
 ```bash
-cd CV-job-matching-assistant/frontend/react-frontend
+cd HireReadyAI/frontend/react-frontend
 npm install
 npm run dev
 ```
@@ -278,7 +363,7 @@ docker compose exec backend python -m backend.app.create_user another-admin --ro
 ```
 reset admin password. NOTE: do this only if required
 ```bash
-cd CV-job-matching-assistant
+cd HireReadyAI
 python -m backend.app.reset_password admin
 ```
 
@@ -323,6 +408,10 @@ On Mac/Linux, find and stop the process using port `8000`:
 ```bash
 lsof -nP -iTCP:8000 -sTCP:LISTEN
 ```
+or 
+```bash
+lsof -i:8000
+```
 it will show PID and then do 
 
 ```bash
@@ -357,32 +446,46 @@ Angular and Streamlit interfaces remain in `frontend/`, but current UI developme
 
 ---
 
-# Current MVP (Minimal Viable Product) Features
+# Current Full Prototype Features
 
-The current MVP supports:
+The current full prototype supports:
 
 - CV upload
 - PDF text extraction
-- Skill detection
-- Job-role comparison
-- Match percentage calculation
-- Missing skill analysis
-- Alternative role recommendations
+- CV skill, project, and experience extraction
+- Job-description extraction using Mistral
+- Company context extraction from job descriptions
+- Saved role and new-job matching
+- Weighted match percentage calculation
+- Skill gap analysis by strongly required, required, preferred, tools/platforms, soft skills, and responsibilities
+- Score explanation UI
+- Personalized learning path generation
+- Interview Preparation Mode
+- Adaptive Interview Mode
+- Coding-question execution for Python
+- RAG-grounded question generation and answer evaluation
+- Admin settings, user management, and learning dashboards
 
 ---
 
 #  Technologies Used
 
 - Python
-- Streamlit
 - FastAPI
-- Angular
 - React
+- Angular
+- Streamlit
 - LangChain
 - FAISS
-- Sentence Transformers
+- HuggingFace Sentence Transformers
+- Mistral API
+- OpenAI-compatible provider option
 - PyMuPDF
+- Pydantic
 - Scikit-learn
+- SQLite
+- Docker
+- Git/GitHub
 
 ---
 
@@ -394,6 +497,8 @@ This prototype follows basic AI governance principles:
 - No unnecessary storage of personal CV data
 - Retrieval-based responses to reduce hallucinations
 - Focus on verified knowledge sources
+- Admin-only access for system learning/debug views
+- Environment-based separation between local development and production
 
 Aligned conceptually with:
 - EU AI Act transparency principles
@@ -409,23 +514,139 @@ Aligned conceptually with:
 3. System extracts skills
 4. System compares with role requirements
 5. System calculates match percentage
-6. System suggests alternative roles
+6. System explains matched and missing skills
+7. System generates a personalized learning path
+8. User practises focused interview questions
+9. System scores answers and adapts the next question
+10. User downloads reports or continues practice
 ```
 
 ---
 
-#  Future Improvements
+# Interview Modes
+
+## Preparation Mode
+
+Preparation Mode is user-guided and focused on one selected skill at a time.
+
+Users can choose:
+
+- target job role
+- one skill from matched or missing skill groups
+- difficulty
+- interview type
+- question count
+- LLM-only or grounded-material generation
+- optional company context
+
+When company context is enabled, questions can be adapted to the organization, industry domain, or business problem extracted from the job description.
+
+## Adaptive Interview Mode
+
+Adaptive Mode is system-guided.
+
+```text
+CV + target role
+      ↓
+Learner profile
+      ↓
+Start from highest-priority weak or strong skill
+      ↓
+Ask question
+      ↓
+Score answer
+      ↓
+Update learner profile
+      ↓
+Choose next skill based on performance
+      ↓
+Final readiness report and next learning path
+```
+
+---
+
+# RAG and Vector Index Management
+
+The project includes a grounded RAG pipeline for verified learning material.
+
+Supported grounding documents:
+
+- PDF
+- TXT
+- MD
+- XML
+
+Vector index lifecycle:
+
+- `use_existing`: load the current FAISS index without rebuilding
+- `update`: add new or changed documents and avoid duplicates using file hashes
+- `recreate`: rebuild the FAISS index from the files currently in `data/grounding/documents`
+
+The document registry stores:
+
+- embedding model
+- embedding dimensions
+- splitter name
+- chunk size
+- chunk overlap
+- filename
+- file hash
+- chunk count
+- chunk IDs
+- indexing timestamp
+
+The admin-only RAG learning dashboard shows:
+
+- document ingestion
+- chunking
+- tokenization
+- embeddings
+- FAISS positions
+- LangChain document IDs
+- metadata
+- retrieval distances
+- accepted/rejected chunks
+- context that would be sent to the LLM
+
+---
+
+# Version Control
+
+This project uses:
+
+- Git for version control
+- GitHub for source-code hosting and project sharing
+
+Do not upload private or generated local files such as:
+
+- `.env`
+- API keys
+- virtual environments
+- `node_modules`
+- `data/app.db`
+- private CVs
+- private uploaded documents
+- generated reports
+- FAISS indexes containing private material
+
+---
+
+
+
+# Future Improvements
 
 Planned enhancements:
 
-- Real RAG pipeline with embeddings
-- Chroma/FAISS vector database
-- LLM-generated career recommendations
+- PostgreSQL support for multi-user deployment
+- Redis-backed rate limiting and background jobs
+- Safer isolated code execution service
+- More deterministic Python and SQL coding test templates
+- More detailed adaptive learner profile over time
+- Richer PDF report generation
 - Multilingual support (French/English)
 - Real Swiss job market integration
-- Admin dashboard
 - CV anonymization
-- Feedback and evaluation system
+- Bias monitoring and fairness reporting
 
 ---
 

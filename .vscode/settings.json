@@ -1,4 +1,4 @@
 {
-  "python.envFile": "${workspaceFolder}/CV-job-matching-assistant/.env",
+  "python.envFile": "${workspaceFolder}/HireReadyAI/.env",
   "python.terminal.useEnvFile": true
 }
