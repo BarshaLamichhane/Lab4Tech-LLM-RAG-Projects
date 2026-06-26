@@ -60,6 +60,30 @@ export interface AppSettings {
   broad_skill_aliases: Record<string, string[]>;
 }
 
+export interface JobDescriptionEvaluationDatasetRequest {
+  filename: string;
+  saved_profile_file: string;
+  role: string;
+  company_name: string;
+  company_context: string;
+  industry_domain: string;
+  business_problem: string;
+  strongly_required_skills: string[];
+  required_skills: string[];
+  preferred_skills: string[];
+  soft_skills: string[];
+  tools_and_platforms: string[];
+  experience: string[];
+  responsibilities: string[];
+}
+
+export interface JobDescriptionEvaluationDatasetResponse {
+  case_id: string;
+  job_description_file: string;
+  expected_job_skills_file: string;
+  updated_at: string;
+}
+
 export interface UserLLMSettings {
   provider: 'mistral' | 'openai';
   model_name: string;

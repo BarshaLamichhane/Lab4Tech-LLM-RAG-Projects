@@ -1,0 +1,38 @@
+{
+  "role": "AI Research Scientist",
+  "company_name": "Giotto AI",
+  "company_context": "Giotto AI builds advanced AI systems for enterprises and public-sector organizations.",
+  "industry_domain": "AI research and machine learning",
+  "business_problem": "Helping organizations build, evaluate, and improve advanced AI systems.",
+  "strongly_required_skills": [
+    "Python",
+    "PyTorch",
+    "Transformer architectures"
+  ],
+  "required_skills": [
+    "Hugging Face Transformers",
+    "Model evaluation",
+    "Large dataset handling",
+    "Experiment tracking",
+    "Reproducible ML workflows"
+  ],
+  "preferred_skills": [
+    "LoRA",
+    "PEFT",
+    "Distributed training",
+    "Retrieval-augmented generation"
+  ],
+  "soft_skills": [],
+  "tools_and_platforms": [
+    "MLflow",
+    "Docker",
+    "Git"
+  ],
+  "experience": [],
+  "responsibilities": [
+    "Design experiments for large language models.",
+    "Train and fine-tune transformer-based models.",
+    "Build evaluation pipelines and analyze model failures.",
+    "Translate research papers into prototypes."
+  ]
+}

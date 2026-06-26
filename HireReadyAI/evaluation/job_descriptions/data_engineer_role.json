@@ -1,0 +1,37 @@
+{
+  "role": "Data Engineer",
+  "company_name": "DataWorks",
+  "company_context": "DataWorks helps organizations build reliable analytics and data infrastructure.",
+  "industry_domain": "Data engineering and analytics infrastructure",
+  "business_problem": "Helping organizations build reliable data pipelines, reporting models, and data quality workflows.",
+  "strongly_required_skills": [
+    "SQL",
+    "Data pipelines",
+    "Python"
+  ],
+  "required_skills": [
+    "ETL",
+    "PostgreSQL",
+    "Data validation",
+    "Docker",
+    "Cloud storage"
+  ],
+  "preferred_skills": [
+    "Airflow",
+    "REST APIs",
+    "Git"
+  ],
+  "soft_skills": [],
+  "tools_and_platforms": [
+    "PostgreSQL",
+    "Airflow",
+    "Docker"
+  ],
+  "experience": [],
+  "responsibilities": [
+    "Build and maintain data pipelines.",
+    "Write SQL transformations and reporting models.",
+    "Monitor data quality and pipeline reliability.",
+    "Deploy reproducible data workflows."
+  ]
+}

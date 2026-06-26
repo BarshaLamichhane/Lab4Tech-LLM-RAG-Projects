@@ -10,6 +10,8 @@ import type {
   InterviewContext,
   InterviewEngine,
   InterviewQuestion,
+  JobDescriptionEvaluationDatasetRequest,
+  JobDescriptionEvaluationDatasetResponse,
   GroundingContextChunk,
   GroundingIndexMode,
   GroundingChunk,
@@ -126,6 +128,15 @@ export function createUser(
   return requestJson<AuthUser>('/api/admin/users', {
     method: 'POST',
     body: JSON.stringify({ username, password, role }),
+  });
+}
+
+export function createJobDescriptionEvaluationCase(
+  payload: JobDescriptionEvaluationDatasetRequest,
+): Promise<JobDescriptionEvaluationDatasetResponse> {
+  return requestJson<JobDescriptionEvaluationDatasetResponse>('/api/admin/evaluation/job-descriptions', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }
 

@@ -8,6 +8,7 @@ import { AdaptiveProgressPage } from './pages/AdaptiveProgressPage';
 import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { HomePage } from './pages/HomePage';
+import { JobDescriptionDatasetPage } from './pages/JobDescriptionDatasetPage';
 import { JobSkillExtractorPage } from './pages/JobSkillExtractorPage';
 import { LearningScoringPage } from './pages/LearningScoringPage';
 import { InterviewPracticePage } from './pages/InterviewPracticePage';
@@ -44,6 +45,7 @@ export function AppRoutes() {
       <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+      <Route path="/admin/evaluation/job-descriptions" element={<AdminRoute><JobDescriptionDatasetPage /></AdminRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

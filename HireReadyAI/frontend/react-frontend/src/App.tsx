@@ -47,6 +47,7 @@ export function App() {
           <NavLink to="/account">Account</NavLink>
           {user.role === 'admin' && <NavLink to="/admin/users">Users</NavLink>}
           {user.role === 'admin' && <NavLink to="/admin/settings">Settings</NavLink>}
+          {user.role === 'admin' && <NavLink to="/admin/evaluation/job-descriptions">Evaluation data</NavLink>}
           <span className="user-badge">{user.username} · {user.role}</span>
           <button className="nav-logout" type="button" onClick={logout}>Sign out</button>
         </div>}

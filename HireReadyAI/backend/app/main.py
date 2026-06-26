@@ -16,6 +16,8 @@ from backend.app.schemas import (
     ExtractJobSkillsResponse,
     InterviewSessionRequest,
     InterviewSessionResponse,
+    JobDescriptionEvaluationDatasetRequest,
+    JobDescriptionEvaluationDatasetResponse,
     LoginRequest,
     LoginResponse,
     MatchNewJobRequest,
@@ -35,6 +37,7 @@ from backend.app.auth import (
     require_user,
 )
 from backend.app.config import CONFIG
+from backend.app.evaluation_dataset import save_job_description_evaluation_case
 from backend.app.evaluation_audit_store import (
     initialize_evaluation_audit_database,
     save_evaluation_audit,
@@ -267,6 +270,18 @@ def create_admin_user(
     _ensure_admin(user)
     try:
         return create_user(request.username, request.password, request.role)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/admin/evaluation/job-descriptions", response_model=JobDescriptionEvaluationDatasetResponse, status_code=201)
+def create_job_description_evaluation_case(
+    request: JobDescriptionEvaluationDatasetRequest,
+    user: CurrentUser = Depends(require_user),
+) -> dict:
+    _ensure_admin(user)
+    try:
+        return save_job_description_evaluation_case(request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

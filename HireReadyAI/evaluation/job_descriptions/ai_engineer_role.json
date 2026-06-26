@@ -1,0 +1,37 @@
+{
+  "role": "AI Engineer",
+  "company_name": "Lab4Tech",
+  "company_context": "Lab4Tech builds AI-powered learning and automation tools for technical teams.",
+  "industry_domain": "AI learning and automation",
+  "business_problem": "Helping technical teams build and use AI-powered workflow and learning tools.",
+  "strongly_required_skills": [
+    "Python",
+    "Retrieval-augmented generation",
+    "API integration"
+  ],
+  "required_skills": [
+    "FastAPI",
+    "LangChain",
+    "Vector databases",
+    "Docker",
+    "SQL"
+  ],
+  "preferred_skills": [
+    "Mistral API",
+    "React",
+    "pytest"
+  ],
+  "soft_skills": [],
+  "tools_and_platforms": [
+    "FAISS",
+    "Git",
+    "Docker"
+  ],
+  "experience": [],
+  "responsibilities": [
+    "Build LLM applications and RAG workflows.",
+    "Develop APIs for AI features.",
+    "Integrate vector databases and document retrieval.",
+    "Deploy containerized AI services."
+  ]
+}

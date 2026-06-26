@@ -1,0 +1,501 @@
+{
+  "generated_at": "2026-06-26T10:44:59.676541+00:00",
+  "source_file": "evaluation/expected_job_skills.json",
+  "summary": {
+    "case_count": 3,
+    "evaluated_case_count": 2,
+    "missing_profile_count": 1,
+    "average_overall_f1": 0.3933,
+    "average_category_f1": 0.2803
+  },
+  "cases": [
+    {
+      "case_id": "ai_engineer_role",
+      "status": "evaluated",
+      "profile_file": "data/extracted_skills_mistral-large-latest/ai_engineer_unknown_company_2026.json",
+      "profile_match_level": "explicit_file",
+      "expected_role": "AI Engineer",
+      "actual_role": "AI Engineer",
+      "role_match": true,
+      "expected_company": "Lab4Tech",
+      "actual_company": "",
+      "company_match": false,
+      "expected_company_context": "Lab4Tech builds AI-powered learning and automation tools for technical teams.",
+      "actual_company_context": "A research and technology center in Luxembourg focused on science, innovation, and applied digital transformation, specializing in AI, data science, advanced materials, and environmental technologies",
+      "company_context_contains_expected_terms": false,
+      "overall": {
+        "precision": 0.375,
+        "recall": 0.4615,
+        "f1": 0.4138,
+        "expected_count": 13,
+        "actual_count": 16,
+        "matched_count": 6,
+        "matched_pairs": [
+          {
+            "expected": "Python",
+            "actual": "Python"
+          },
+          {
+            "expected": "Retrieval-augmented generation",
+            "actual": "RAG architectures"
+          },
+          {
+            "expected": "API integration",
+            "actual": "API integration (REST / GraphQL)"
+          },
+          {
+            "expected": "LangChain",
+            "actual": "Agent frameworks"
+          },
+          {
+            "expected": "Vector databases",
+            "actual": "Vector databases"
+          },
+          {
+            "expected": "Docker",
+            "actual": "Docker"
+          }
+        ],
+        "missing_expected": [
+          "FastAPI",
+          "SQL",
+          "Mistral API",
+          "React",
+          "pytest",
+          "FAISS",
+          "Git"
+        ],
+        "unexpected_actual": [
+          "LLM-based agents",
+          "Large language models (LLMs)",
+          "Retrieval-augmented generation (RAG)",
+          "AI workflow orchestration",
+          "AWS Bedrock",
+          "Microsoft Foundry",
+          "Kubernetes"
+        ]
+      },
+      "categories": {
+        "strongly_required_skills": {
+          "precision": 0.5,
+          "recall": 0.6667,
+          "f1": 0.5714,
+          "expected_count": 3,
+          "actual_count": 4,
+          "matched_count": 2,
+          "matched_pairs": [
+            {
+              "expected": "Python",
+              "actual": "Python"
+            },
+            {
+              "expected": "Retrieval-augmented generation",
+              "actual": "RAG architectures"
+            }
+          ],
+          "missing_expected": [
+            "API integration"
+          ],
+          "unexpected_actual": [
+            "LLM-based agents",
+            "Agent frameworks"
+          ]
+        },
+        "required_skills": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "expected_count": 5,
+          "actual_count": 4,
+          "matched_count": 0,
+          "matched_pairs": [],
+          "missing_expected": [
+            "FastAPI",
+            "LangChain",
+            "Vector databases",
+            "Docker",
+            "SQL"
+          ],
+          "unexpected_actual": [
+            "Large language models (LLMs)",
+            "Retrieval-augmented generation (RAG)",
+            "AI workflow orchestration",
+            "API integration (REST / GraphQL)"
+          ]
+        },
+        "preferred_skills": {
+          "precision": 1.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "expected_count": 3,
+          "actual_count": 0,
+          "matched_count": 0,
+          "matched_pairs": [],
+          "missing_expected": [
+            "Mistral API",
+            "React",
+            "pytest"
+          ],
+          "unexpected_actual": []
+        },
+        "tools_and_platforms": {
+          "precision": 0.125,
+          "recall": 0.3333,
+          "f1": 0.1818,
+          "expected_count": 3,
+          "actual_count": 8,
+          "matched_count": 1,
+          "matched_pairs": [
+            {
+              "expected": "Docker",
+              "actual": "Docker"
+            }
+          ],
+          "missing_expected": [
+            "FAISS",
+            "Git"
+          ],
+          "unexpected_actual": [
+            "LangChain",
+            "LangGraph",
+            "CrewAI",
+            "AWS Bedrock",
+            "Microsoft Foundry",
+            "Kubernetes",
+            "Vector databases"
+          ]
+        }
+      },
+      "actual_skills": {
+        "strongly_required_skills": [
+          "Python",
+          "LLM-based agents",
+          "Agent frameworks",
+          "RAG architectures"
+        ],
+        "required_skills": [
+          "Large language models (LLMs)",
+          "Retrieval-augmented generation (RAG)",
+          "AI workflow orchestration",
+          "API integration (REST / GraphQL)"
+        ],
+        "preferred_skills": [],
+        "tools_and_platforms": [
+          "LangChain",
+          "LangGraph",
+          "CrewAI",
+          "AWS Bedrock",
+          "Microsoft Foundry",
+          "Docker",
+          "Kubernetes",
+          "Vector databases"
+        ]
+      }
+    },
+    {
+      "case_id": "ai_research_scientist_role",
+      "status": "evaluated",
+      "profile_file": "data/extracted_skills_mistral-large-latest/ai_research_scientist_giotto_ai_2026.json",
+      "profile_match_level": "explicit_file",
+      "expected_role": "AI Research Scientist",
+      "actual_role": "AI Research Scientist",
+      "role_match": true,
+      "expected_company": "Giotto AI",
+      "actual_company": "Giotto.ai",
+      "company_match": true,
+      "expected_company_context": "Giotto AI builds advanced AI systems for enterprises and public-sector organizations.",
+      "actual_company_context": "A Switzerland-based AI company building intelligence systems for governments and enterprises, focusing on portable, configurable AI models and operating systems with advanced reasoning capabilities",
+      "company_context_contains_expected_terms": true,
+      "overall": {
+        "precision": 0.25,
+        "recall": 0.7333,
+        "f1": 0.3729,
+        "expected_count": 15,
+        "actual_count": 44,
+        "matched_count": 11,
+        "matched_pairs": [
+          {
+            "expected": "Python",
+            "actual": "Python"
+          },
+          {
+            "expected": "PyTorch",
+            "actual": "PyTorch"
+          },
+          {
+            "expected": "Transformer architectures",
+            "actual": "Transformer architectures"
+          },
+          {
+            "expected": "Hugging Face Transformers",
+            "actual": "Hugging Face Transformers"
+          },
+          {
+            "expected": "Large dataset handling",
+            "actual": "Data preprocessing and large dataset handling"
+          },
+          {
+            "expected": "Reproducible ML workflows",
+            "actual": "Reproducible ML workflows"
+          },
+          {
+            "expected": "LoRA",
+            "actual": "PEFT / LoRA / QLoRA"
+          },
+          {
+            "expected": "Distributed training",
+            "actual": "Distributed training at scale"
+          },
+          {
+            "expected": "Retrieval-augmented generation",
+            "actual": "Retrieval-augmented generation"
+          },
+          {
+            "expected": "MLflow",
+            "actual": "MLflow"
+          },
+          {
+            "expected": "Docker",
+            "actual": "Docker"
+          }
+        ],
+        "missing_expected": [
+          "Model evaluation",
+          "Experiment tracking",
+          "PEFT",
+          "Git"
+        ],
+        "unexpected_actual": [
+          "Hugging Face ecosystem",
+          "LLM training, fine-tuning, evaluation, or inference",
+          "Model training and deployment",
+          "Experiment design and hypothesis testing",
+          "Mathematical foundations in linear algebra, probability, statistics, and optimization",
+          "Research paper implementation and prototyping",
+          "Training dynamics and optimization",
+          "Evaluation methodology and benchmarking",
+          "LLM reasoning and planning",
+          "Multimodal learning",
+          "Program synthesis or structured prediction",
+          "Synthetic data generation",
+          "Model merging, distillation, and compression",
+          "Reinforcement learning or preference optimization",
+          "Evaluation of reasoning and generalization",
+          "Mechanistic interpretability or model analysis",
+          "Agentic systems and tool-using models",
+          "Low-level inference optimization",
+          "Hugging Face Datasets",
+          "CUDA-aware GPU training",
+          "Weights & Biases",
+          "GitLab CI",
+          "GCP / cloud GPU infrastructure",
+          "Ray",
+          "FSDP",
+          "DeepSpeed",
+          "Accelerate",
+          "vLLM",
+          "pytest",
+          "Triton",
+          "GCS",
+          "Vector databases"
+        ]
+      },
+      "categories": {
+        "strongly_required_skills": {
+          "precision": 0.6,
+          "recall": 1.0,
+          "f1": 0.75,
+          "expected_count": 3,
+          "actual_count": 5,
+          "matched_count": 3,
+          "matched_pairs": [
+            {
+              "expected": "Python",
+              "actual": "Python"
+            },
+            {
+              "expected": "PyTorch",
+              "actual": "PyTorch"
+            },
+            {
+              "expected": "Transformer architectures",
+              "actual": "Transformer architectures"
+            }
+          ],
+          "missing_expected": [],
+          "unexpected_actual": [
+            "Hugging Face ecosystem",
+            "LLM training, fine-tuning, evaluation, or inference"
+          ]
+        },
+        "required_skills": {
+          "precision": 0.25,
+          "recall": 0.4,
+          "f1": 0.3077,
+          "expected_count": 5,
+          "actual_count": 8,
+          "matched_count": 2,
+          "matched_pairs": [
+            {
+              "expected": "Large dataset handling",
+              "actual": "Data preprocessing and large dataset handling"
+            },
+            {
+              "expected": "Reproducible ML workflows",
+              "actual": "Reproducible ML workflows"
+            }
+          ],
+          "missing_expected": [
+            "Hugging Face Transformers",
+            "Model evaluation",
+            "Experiment tracking"
+          ],
+          "unexpected_actual": [
+            "Model training and deployment",
+            "Experiment design and hypothesis testing",
+            "Mathematical foundations in linear algebra, probability, statistics, and optimization",
+            "Research paper implementation and prototyping",
+            "Training dynamics and optimization",
+            "Evaluation methodology and benchmarking"
+          ]
+        },
+        "preferred_skills": {
+          "precision": 0.1667,
+          "recall": 0.5,
+          "f1": 0.25,
+          "expected_count": 4,
+          "actual_count": 12,
+          "matched_count": 2,
+          "matched_pairs": [
+            {
+              "expected": "Distributed training",
+              "actual": "Distributed training at scale"
+            },
+            {
+              "expected": "Retrieval-augmented generation",
+              "actual": "Retrieval-augmented generation"
+            }
+          ],
+          "missing_expected": [
+            "LoRA",
+            "PEFT"
+          ],
+          "unexpected_actual": [
+            "LLM reasoning and planning",
+            "Multimodal learning",
+            "Program synthesis or structured prediction",
+            "Synthetic data generation",
+            "Model merging, distillation, and compression",
+            "Reinforcement learning or preference optimization",
+            "Evaluation of reasoning and generalization",
+            "Mechanistic interpretability or model analysis",
+            "Agentic systems and tool-using models",
+            "Low-level inference optimization"
+          ]
+        },
+        "tools_and_platforms": {
+          "precision": 0.1053,
+          "recall": 0.6667,
+          "f1": 0.1818,
+          "expected_count": 3,
+          "actual_count": 19,
+          "matched_count": 2,
+          "matched_pairs": [
+            {
+              "expected": "MLflow",
+              "actual": "MLflow"
+            },
+            {
+              "expected": "Docker",
+              "actual": "Docker"
+            }
+          ],
+          "missing_expected": [
+            "Git"
+          ],
+          "unexpected_actual": [
+            "Hugging Face Transformers",
+            "Hugging Face Datasets",
+            "CUDA-aware GPU training",
+            "Weights & Biases",
+            "GitLab CI",
+            "GCP / cloud GPU infrastructure",
+            "Ray",
+            "PyTorch Distributed",
+            "FSDP",
+            "DeepSpeed",
+            "Accelerate",
+            "PEFT / LoRA / QLoRA",
+            "vLLM",
+            "pytest",
+            "Triton",
+            "GCS",
+            "Vector databases"
+          ]
+        }
+      },
+      "actual_skills": {
+        "strongly_required_skills": [
+          "Python",
+          "PyTorch",
+          "Hugging Face ecosystem",
+          "Transformer architectures",
+          "LLM training, fine-tuning, evaluation, or inference"
+        ],
+        "required_skills": [
+          "Model training and deployment",
+          "Experiment design and hypothesis testing",
+          "Data preprocessing and large dataset handling",
+          "Reproducible ML workflows",
+          "Mathematical foundations in linear algebra, probability, statistics, and optimization",
+          "Research paper implementation and prototyping",
+          "Training dynamics and optimization",
+          "Evaluation methodology and benchmarking"
+        ],
+        "preferred_skills": [
+          "LLM reasoning and planning",
+          "Multimodal learning",
+          "Program synthesis or structured prediction",
+          "Synthetic data generation",
+          "Model merging, distillation, and compression",
+          "Reinforcement learning or preference optimization",
+          "Evaluation of reasoning and generalization",
+          "Mechanistic interpretability or model analysis",
+          "Retrieval-augmented generation",
+          "Agentic systems and tool-using models",
+          "Distributed training at scale",
+          "Low-level inference optimization"
+        ],
+        "tools_and_platforms": [
+          "Hugging Face Transformers",
+          "Hugging Face Datasets",
+          "CUDA-aware GPU training",
+          "MLflow",
+          "Weights & Biases",
+          "Docker",
+          "GitLab CI",
+          "GCP / cloud GPU infrastructure",
+          "Ray",
+          "PyTorch Distributed",
+          "FSDP",
+          "DeepSpeed",
+          "Accelerate",
+          "PEFT / LoRA / QLoRA",
+          "vLLM",
+          "pytest",
+          "Triton",
+          "GCS",
+          "Vector databases"
+        ]
+      }
+    },
+    {
+      "case_id": "data_engineer_role",
+      "status": "not_found",
+      "message": "No saved Mistral-extracted job profile found for this case.",
+      "expected_role": "Data Engineer",
+      "expected_company": "DataWorks",
+      "expected_profile_file": ""
+    }
+  ]
+}

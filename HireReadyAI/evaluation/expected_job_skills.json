@@ -1,0 +1,108 @@
+{
+  "version": "0.1",
+  "description": "Gold labels for evaluating job-description skill extraction only.",
+  "evaluation_notes": [
+    "This file evaluates saved Mistral-extracted job profile JSON files against manually labeled expected job skills.",
+    "It does not evaluate CV extraction or CV-job matching.",
+    "If a saved_profile_file is empty, the evaluator tries to find a saved profile by role and company."
+  ],
+  "cases": [
+    {
+      "case_id": "ai_engineer_role",
+      "job_description_file": "job_descriptions/ai_engineer_role.json",
+      "saved_profile_file": "ai_engineer_unknown_company_2026.json",
+      "expected_role": "AI Engineer",
+      "expected_company": "Lab4Tech",
+      "expected_company_context": "Lab4Tech builds AI-powered learning and automation tools for technical teams.",
+      "expected_job_skills": {
+        "strongly_required_skills": [
+          "Python",
+          "Retrieval-augmented generation",
+          "API integration"
+        ],
+        "required_skills": [
+          "FastAPI",
+          "LangChain",
+          "Vector databases",
+          "Docker",
+          "SQL"
+        ],
+        "preferred_skills": [
+          "Mistral API",
+          "React",
+          "pytest"
+        ],
+        "tools_and_platforms": [
+          "FAISS",
+          "Git",
+          "Docker"
+        ]
+      }
+    },
+    {
+      "case_id": "ai_research_scientist_role",
+      "job_description_file": "job_descriptions/ai_research_scientist_role.json",
+      "saved_profile_file": "ai_research_scientist_giotto_ai_2026.json",
+      "expected_role": "AI Research Scientist",
+      "expected_company": "Giotto AI",
+      "expected_company_context": "Giotto AI builds advanced AI systems for enterprises and public-sector organizations.",
+      "expected_job_skills": {
+        "strongly_required_skills": [
+          "Python",
+          "PyTorch",
+          "Transformer architectures"
+        ],
+        "required_skills": [
+          "Hugging Face Transformers",
+          "Model evaluation",
+          "Large dataset handling",
+          "Experiment tracking",
+          "Reproducible ML workflows"
+        ],
+        "preferred_skills": [
+          "LoRA",
+          "PEFT",
+          "Distributed training",
+          "Retrieval-augmented generation"
+        ],
+        "tools_and_platforms": [
+          "MLflow",
+          "Docker",
+          "Git"
+        ]
+      }
+    },
+    {
+      "case_id": "data_engineer_role",
+      "job_description_file": "job_descriptions/data_engineer_role.json",
+      "saved_profile_file": "",
+      "expected_role": "Data Engineer",
+      "expected_company": "DataWorks",
+      "expected_company_context": "DataWorks helps organizations build reliable analytics and data infrastructure.",
+      "expected_job_skills": {
+        "strongly_required_skills": [
+          "SQL",
+          "Data pipelines",
+          "Python"
+        ],
+        "required_skills": [
+          "ETL",
+          "PostgreSQL",
+          "Data validation",
+          "Docker",
+          "Cloud storage"
+        ],
+        "preferred_skills": [
+          "Airflow",
+          "REST APIs",
+          "Git"
+        ],
+        "tools_and_platforms": [
+          "PostgreSQL",
+          "Airflow",
+          "Docker"
+        ]
+      }
+    }
+  ]
+}

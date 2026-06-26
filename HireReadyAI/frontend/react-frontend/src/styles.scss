@@ -512,6 +512,44 @@ h3 {
   margin-left: auto;
 }
 
+.evaluation-builder-grid {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  margin: 0 auto 18px;
+  max-width: 1380px;
+}
+
+.dataset-section-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dataset-list-textarea {
+  min-height: 132px;
+}
+
+.dataset-preview-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.dataset-preview-panel pre {
+  background: #f8fbff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #1f344d;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin: 14px 0 0;
+  max-height: 720px;
+  overflow: auto;
+  padding: 16px;
+  white-space: pre-wrap;
+}
+
 .session-grid {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
@@ -2950,6 +2988,8 @@ pre {
   .result-grid,
   .chart-grid,
   .settings-grid,
+  .evaluation-builder-grid,
+  .dataset-section-grid,
   .practice-grid {
     grid-template-columns: 1fr;
   }

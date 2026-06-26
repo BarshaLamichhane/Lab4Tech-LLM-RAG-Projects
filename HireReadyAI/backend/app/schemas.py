@@ -54,6 +54,30 @@ class UserResponse(BaseModel):
     role: str
 
 
+class JobDescriptionEvaluationDatasetRequest(BaseModel):
+    filename: str = Field(default="", max_length=120)
+    saved_profile_file: str = Field(default="", max_length=200)
+    role: str = Field(min_length=1, max_length=160)
+    company_name: str = Field(default="", max_length=160)
+    company_context: str = Field(default="", max_length=600)
+    industry_domain: str = Field(default="", max_length=200)
+    business_problem: str = Field(default="", max_length=600)
+    strongly_required_skills: list[str] = Field(default_factory=list)
+    required_skills: list[str] = Field(default_factory=list)
+    preferred_skills: list[str] = Field(default_factory=list)
+    soft_skills: list[str] = Field(default_factory=list)
+    tools_and_platforms: list[str] = Field(default_factory=list)
+    experience: list[str] = Field(default_factory=list)
+    responsibilities: list[str] = Field(default_factory=list)
+
+
+class JobDescriptionEvaluationDatasetResponse(BaseModel):
+    case_id: str
+    job_description_file: str
+    expected_job_skills_file: str
+    updated_at: str
+
+
 class AppSettings(BaseModel):
     skill_weights: SkillWeights
     skill_aliases: dict[str, str] = Field(default_factory=dict)
