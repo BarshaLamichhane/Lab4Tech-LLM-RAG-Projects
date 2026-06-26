@@ -15,13 +15,16 @@ The system supports company-context-aware interview generation, adaptive intervi
 ✅ Capture company context from job descriptions, including company name, industry domain, company context, and business problem  
 ✅ Compare CV skills against saved or newly extracted job roles  
 ✅ Calculate weighted match score with admin-adjustable skill weights  
-✅ Show matched and missing skills by category  
+✅ Show exact matched and missing skills by category for transparent fit analysis  
 ✅ Generate score explanation and category-wise match details  
 ✅ Generate personalized learning paths from skill gaps and interview performance  
+✅ Download extracted job profiles and match outputs as JSON  
+✅ Download generated interview question sets as JSON or PDF  
+✅ Download complete interview preparation and adaptive interview reports as PDF  
 ✅ Interview Preparation Mode for focused single-skill practice  
 ✅ Company-context-aware interview generation for realistic organization-specific questions  
 ✅ Adaptive Interview Mode that switches skills based on learner performance  
-✅ LLM-based answer scoring with rubric, test-based, and grounded evaluation strategies  
+✅ Hybrid answer evaluation using structured rubrics, Python code execution, test-based checks, and RAG-grounded context instead of relying only on raw LLM scoring  
 ✅ Python coding-question runner for live coding practice  
 ✅ RAG-grounded question generation from uploaded learning material  
 ✅ FAISS vector index lifecycle: use existing, update, or recreate  
@@ -47,10 +50,79 @@ Personalized Learning Path
         ↓
 Interview Preparation / Adaptive Interview
         ↓
+LLM Scoring + Code Runner + RAG Grounding
+        ↓
 Rubric Scoring + Test-Based Scoring + Grounded RAG Scoring
         ↓
 Feedback + Reports + Next Practice Plan
 ```
+
+## Impact Areas and Applications
+
+HireReadyAI is designed as a modular AI career-readiness platform, not only a
+single job-matching script. Its core subsystems can support multiple business
+and learning use cases.
+
+```text
+┌──────────────────────────────────────────────┐
+│          HireReadyAI Core Subsystems          │
+├──────────────────────────────────────────────┤
+│ CV Parsing                                   │
+│ Job Skill Extraction                         │
+│ Skill Normalization and Matching             │
+│ Transparent Match Scoring                    │
+│ Interview Preparation                        │
+│ Adaptive Learning                            │
+│ Code Runner                                  │
+│ RAG Grounding                                │
+│ Downloadable Reports                         │
+└───────────────────────┬──────────────────────┘
+                        │
+        ┌───────────────┼────────────────┬────────────────┐
+        ▼               ▼                ▼                ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ B2B          │ │ Technical    │ │ HR Consulting│ │ Education &  │
+│ Recruitment  │ │ Talent       │ │ & Agencies   │ │ Bootcamps    │
+├──────────────┤ ├──────────────┤ ├──────────────┤ ├──────────────┤
+│ Skills-based │ │ Standardized │ │ Rapid client │ │ Personalized │
+│ screening    │ │ readiness    │ │ job briefing │ │ learning     │
+│ Transparent  │ │ profiles     │ │ Repeatable   │ │ Role-focused │
+│ fit reports  │ │ Coding       │ │ screening    │ │ practice     │
+│ Admin-tuned  │ │ sandbox      │ │ Explainable  │ │ Progress     │
+│ score weights│ │ practice     │ │ reports      │ │ dashboards   │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+                        │
+                        ▼
+                ┌──────────────┐
+                │ Individual   │
+                │ Job Seekers  │
+                ├──────────────┤
+                │ Exact skill  │
+                │ gap clarity  │
+                │ Interview    │
+                │ readiness    │
+                │ Downloadable │
+                │ reports      │
+                └──────────────┘
+```
+
+### Business Applications
+
+- **B2B corporate recruitment:** skills-based screening, transparent candidate
+  shortlisting, internal mobility support, and admin-configurable scoring
+  metrics aligned with role priorities.
+- **Technical talent marketplaces:** standardized candidate readiness profiles,
+  coding-practice evidence, role-fit scoring, and downloadable preparation
+  reports.
+- **HR consulting and agencies:** faster job briefing, repeatable screening
+  criteria, client-specific evaluation datasets, and explainable candidate-role
+  fit reports.
+- **Universities and bootcamps:** role-focused interview preparation,
+  personalized learning paths, progress dashboards, and RAG-grounded questions
+  from course material.
+- **Individual job seekers:** exact matched/missing skill visibility,
+  focused interview practice, adaptive learning, and downloadable reports for
+  self-review.
 
 ## RAG Architecture
 
@@ -120,8 +192,7 @@ HireReadyAI/
 │   │   ├── index.html
 │   │   ├── package.json
 │   │   └── src/
-│   ├── angular-frontend/            # Angular UI kept for comparison
-│   └── streamlit-ui/                # Existing Streamlit UIs kept for now
+│   └── streamlit-ui/                # Existing Streamlit prototype UIs kept for now
 │       ├── app-cv-job-matching-engine.py
 │       ├── app-cv-job-matching-with-new-job.py
 │       ├── app-job-skill-extractor-mistral-api.py
@@ -256,7 +327,7 @@ Expected response:
 
 The React application requires login:
 
-- Admins can create user/admin accounts, run matching and interview practice, edit default score weights and aliases, and view their saved sessions.
+- Admins can create user/admin accounts, run matching and interview practice, configure default scoring weights and skill aliases through the UI, and view their saved sessions.
 - Regular users can run matching and interview practice and view only their own saved sessions.
 - Users and matching/interview sessions are saved in the SQLite database at `data/app.db` by default.
 - Admin settings are saved locally in `data/app_settings.json`; skill aliases update `data/taxonomies/skill_categories.json`.
@@ -440,9 +511,9 @@ lsof -tiTCP:8001 -sTCP:LISTEN | xargs kill -9
 
 Alternatively, start the backend on another port. If you do this, also update `API_BASE_URL` in `frontend/react-frontend/src/api.ts`.
 
-## Optional legacy frontends
+## Optional legacy frontend
 
-Angular and Streamlit interfaces remain in `frontend/`, but current UI development is focused on React.
+Streamlit prototype interfaces remain in `frontend/streamlit-ui/`, but current UI development is focused on React.
 
 ---
 
@@ -473,7 +544,6 @@ The current full prototype supports:
 - Python
 - FastAPI
 - React
-- Angular
 - Streamlit
 - LangChain
 - FAISS
@@ -514,7 +584,7 @@ Aligned conceptually with:
 3. System extracts skills
 4. System compares with role requirements
 5. System calculates match percentage
-6. System explains matched and missing skills
+6. System explains exact matched and missing skills for transparency
 7. System generates a personalized learning path
 8. User practises focused interview questions
 9. System scores answers and adapts the next question

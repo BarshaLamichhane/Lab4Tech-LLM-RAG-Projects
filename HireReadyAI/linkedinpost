@@ -1,0 +1,254 @@
+🚀 Introducing HireReadyAI
+
+Currently I am working in an Lab4Tech which provides technical training for those who is seeking for job opportunities. Profilers and Job seekers really don't know of exactly how well their profile fits a role, which skills are missing, how to prepare for interviews in a focused way.
+
+So to help both the profile and job seeker  I built HireRaedyAI combining CV analysis, job-description skill extraction, skill-gap matching, personalized interview preparation, adaptive practice, and RAG-grounded learning material.
+on, adaptive practice, and RAG-grounded learning material.
+
+What the system does:
+
+- Extracts skills from CVs, including experience and project sections
+- Extracts structured job requirements from job descriptions using Mistral
+- Captures company context such as company name, domain, business problem, and organization mission
+- Compares CV skills against saved or newly uploaded job roles
+- Shows exact matched and missing skills by category so users can clearly understand why they are or are not a fit
+- Calculates weighted match scores with explainable category-wise breakdowns
+- Lets admins configure scoring metrics, skill weights, skill aliases, and broad skill mappings through the UI
+- Provides downloadable outputs, including extracted job-profile JSON, generated question sets as JSON/PDF, complete interview preparation reports as PDF, and adaptive interview reports as PDF
+- Generates focused interview practice questions for a selected skill
+- Supports company-context-aware interview generation
+- Supports adaptive interview mode that moves between skills based on learner performance
+- Evaluates interview answers through a hybrid scoring pipeline: structured rubrics, Python code execution, test-based checks, and RAG-grounded context, rather than relying solely on an LLM-generated score
+- Provides live Python coding practice for coding-style interview questions
+- Supports RAG-grounded question generation from uploaded learning material
+- Allows admins to manage users, evaluation datasets, scoring configuration, and model settings
+
+High-level architecture:
+
+CV / Job Description
+↓
+Text extraction and parsing
+↓
+CV skill extraction + job skill extraction
+↓
+Skill normalization and alias matching
+↓
+Weighted skill match calculation
+↓
+Skill gap analysis
+↓
+Personalized learning path
+↓
+Interview preparation mode / adaptive interview mode
+↓
+LLM scoring + code runner + RAG grounding
+↓
+Answer evaluation and feedback
+↓
+Reports, progress dashboards, and next practice plan
+
+Backend architecture:
+
+The backend is built with FastAPI and organized into clear modules:
+
+- cv: CV parsing, deterministic skill extraction, project extraction
+- job_description: Mistral-based job-description extraction and saved job profile catalog
+- matching: skill normalization, alias matching, broad skill matching, weighted scoring
+- interview: preparation mode, adaptive interview mode, code runner, answer scoring, RAG grounding
+- app: authentication, user/session management, API routes, settings, and admin tools
+
+Frontend architecture:
+
+The current primary UI is built in React.
+
+It includes:
+
+- job skill extraction
+- CV vs saved role matching
+- CV vs new job-description matching
+- interview preparation mode
+- adaptive interview mode
+- progress dashboards
+- admin settings
+- user and admin management
+- RAG learning visualization
+- job-description evaluation dataset builder
+- downloadable question sets, match outputs, and interview reports
+
+I kept the older Streamlit prototype separately for reference, while React is now the main application UI.
+
+Transparency and explainability:
+
+I wanted the system to be transparent from both the user and admin perspective.
+
+For users:
+
+- They can see exactly which CV skills matched the role requirements
+- They can see exactly which required skills are missing
+- They can see whether the gap is in strongly required skills, required skills, tools/platforms, preferred skills, or soft skills
+- They can inspect category-wise score contribution rather than only seeing one final percentage
+
+For admins:
+
+- Skill weights can be configured through the UI
+- Skill aliases can be updated through the UI
+- Broad skill mappings can be updated through the UI
+- Evaluation datasets can be created through the UI
+- Scoring behavior becomes easier to audit and improve over time
+
+Impact areas and possible applications:
+
+HireReadyAI is not only a job-matching demo. It can be applied across different talent, learning, and workforce-development scenarios.
+
+High-level business map:
+
+HireReadyAI core subsystems
+↓
+CV parsing + job skill extraction + skill matching + interview preparation + adaptive learning + RAG grounding
+↓
+Application areas:
+
+1. B2B corporate recruitment
+
+- Skills-based candidate screening
+- Transparent shortlisting using exact matched and missing skills
+- Role-specific interview preparation for internal mobility
+- Admin-configurable scoring metrics aligned with company hiring priorities
+- Company-context-aware interview questions based on real business domains
+
+2. Technical talent marketplaces
+
+- Standardized skill-readiness profiles for candidates
+- Coding practice with Python execution instead of only theoretical answers
+- Role-readiness scoring for AI, data, and software roles
+- Downloadable candidate preparation and interview reports
+
+3. HR consulting and recruitment agencies
+
+- Faster client job briefing from structured job-description extraction
+- Repeatable screening criteria across multiple client roles
+- White-label style evaluation datasets for different industries
+- Explainable candidate-role fit reports for recruiters and clients
+
+4. Universities, bootcamps, and training providers
+
+- Personalized learning paths from skill gaps
+- Interview practice aligned with target roles
+- Progress dashboards across multiple practice sessions
+- RAG-grounded questions from uploaded course material or verified learning resources
+
+5. Individual job seekers
+
+- Clear understanding of fit for a target role
+- Exact list of missing strongly required and required skills
+- Focused interview practice by skill
+- Downloadable reports for self-review and improvement tracking
+
+RAG architecture:
+
+For grounded interview generation and evaluation, the system supports verified learning material.
+
+The RAG flow is:
+
+Uploaded documents
+↓
+Stored under data/grounding/documents
+↓
+Chunked with LangChain RecursiveCharacterTextSplitter
+↓
+Embedded using HuggingFace sentence-transformers/all-MiniLM-L6-v2
+↓
+Stored in FAISS
+↓
+Retrieved using role, selected skill, and optional grounding query
+↓
+Passed as context to the LLM for grounded question generation or grounded answer evaluation
+
+The system supports:
+
+- use existing FAISS index
+- recreate index
+- update index
+- document registry with file hashes
+- chunk metadata
+- vector database inspection through an admin learning UI
+
+Interview scoring architecture:
+
+The system does not simply ask the LLM for a final score.
+
+It uses structured evaluation:
+
+- The LLM generates or receives expected points and rubric criteria
+- The backend validates the question and evaluation structure
+- For common Python topics, deterministic templates can replace LLM-generated expected points
+- For coding questions, Python test cases can be used
+- For grounded questions, retrieved context is used as source of truth
+- Final score is calculated from structured score breakdowns rather than blindly trusting a single LLM number
+
+Evaluation work:
+
+I also started building an evaluation layer for the system.
+
+Currently, I am focusing on job-description extraction evaluation first, because if job extraction is weak, CV-job matching will also be misleading.
+
+The evaluation setup now includes:
+
+- structured JSON job-description datasets
+- manually labeled expected job skills
+- category-level evaluation for:
+  - strongly required skills
+  - required skills
+  - preferred skills
+  - tools and platforms
+- precision, recall, and F1 scoring
+- comparison against saved Mistral-extracted job profiles
+- React admin UI to create new evaluation datasets
+
+This helped reveal real gaps, such as extracted job profiles not always aligning with manually expected skill categories. That is useful because the system now has a feedback loop for improving prompts, normalization, taxonomy, and extraction quality.
+
+Some technical choices:
+
+- FastAPI for backend APIs
+- React for the primary frontend
+- Mistral for job extraction and interview generation/evaluation
+- FAISS for local vector search
+- HuggingFace embeddings for RAG
+- LangChain for document chunking
+- Pydantic schemas for structured backend contracts
+- JWT/cookie-based authentication with admin and user roles
+- Docker support for deployability
+- Git/GitHub for version control
+
+What I learned:
+
+Building an LLM application is not only about calling a model.
+
+The difficult parts are:
+
+- designing the schema
+- keeping outputs structured
+- normalizing equivalent skills such as RAG and retrieval-augmented generation
+- making scoring explainable
+- adding deterministic checks where LLMs are too variable
+- separating normal LLM generation from grounded RAG generation
+- creating evaluation datasets so the system can actually improve (more challenging for interview generation and personalized learning profile)
+
+Future enhancements I want to add:
+
+- expand the job-description evaluation dataset from 3 cases to a larger benchmark
+- add CV extraction evaluation after job extraction is stable
+- evaluate end-to-end CV-job matching with manually labeled expected matches
+- improve prompt quality based on evaluation failures
+- add more skill aliases and broad skill mappings
+- support SQL code execution in a safe sandbox
+- add stronger adaptive learning profiles across multiple sessions
+- add user-level saved learning paths and longitudinal progress
+- add production deployment hardening, monitoring, and audit logs
+- add bias and fairness checks for scoring and feedback
+- add OpenAI provider support alongside Mistral for configurable LLM usage
+
+This project gave me a much clearer understanding of what production-style LLM systems need: structured data contracts, retrieval strategy, evaluation, observability, and user-centered workflows.
+
+Project: HireReadyAI
+Focus: LLM applications, RAG, skill matching, interview preparation, adaptive learning, and evaluation-driven AI product development.
